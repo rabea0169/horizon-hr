@@ -1,0 +1,398 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 5.5%;
+    --foreground: 0 0% 100%;
+    --card: 240 6% 11%;
+    --card-foreground: 0 0% 100%;
+    --popover: 240 6% 11%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 320 26% 21%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 17%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 6% 17%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 8 77% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 240 6% 17%;
+    --ring: 320 26% 21%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 5.5%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 320 26% 21%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 17%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.08;
+    --sidebar-ring: 320 26% 21%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body, input, button, select, textarea, table {
+    font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ─── Print Styles ─── */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide sidebar, top bar, buttons */
+  aside,
+  header,
+  button:not(.print-only),
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Reset layout for printing */
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Cards become white for print */
+  [class*="bg-[#1C1C1E]"] {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+
+  [class*="bg-[#0E0E0E]"] {
+    background: white !important;
+  }
+
+  [class*="text-white"] {
+    color: black !important;
+  }
+
+  [class*="text-white/50"],
+  [class*="text-white/45"] {
+    color: #666 !important;
+  }
+
+  [class*="text-white/70"] {
+    color: #333 !important;
+  }
+
+  [class*="border-white/[0.08]"] {
+    border-color: #ddd !important;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    color: black !important;
+  }
+
+  th {
+    background: #f5f5f5 !important;
+  }
+}
+
+/* ─── Light Theme Overrides ─── */
+.light-theme {
+  --background: 0 0% 98%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 320 26% 21%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 8 77% 60%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 320 26% 21%;
+
+  --bg-primary: #f8f9fa;
+  --bg-card: #ffffff;
+  --bg-input: #f1f3f4;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a5a;
+  --text-muted: #6b7280;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --sidebar-bg: #f1f3f4;
+}
+
+.dark-theme {
+  --background: 0 0% 5.5%;
+  --foreground: 0 0% 100%;
+  --card: 240 6% 11%;
+  --card-foreground: 0 0% 100%;
+  --popover: 240 6% 11%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 320 26% 21%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 6% 17%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 240 6% 17%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 8 77% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 100% / 0.08;
+  --input: 240 6% 17%;
+  --ring: 320 26% 21%;
+
+  --bg-primary: #0E0E0E;
+  --bg-card: #1C1C1E;
+  --bg-input: #2C2C2E;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --sidebar-bg: #0E0E0E;
+}
+
+/* Apply theme variables */
+.light-theme body {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.light-theme aside {
+  background: var(--sidebar-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+.light-theme header {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Light Theme — override hardcoded dark colors in legacy pages */
+.light-theme .text-white,
+.light-theme [class*="text-white"] {
+  color: var(--text-primary) !important;
+}
+
+.light-theme .bg-\[\#1C1C1E\],
+.light-theme [class*="bg-[#1C1C1E]"] {
+  background: var(--bg-card) !important;
+}
+
+.light-theme .bg-\[\#2C2C2E\],
+.light-theme [class*="bg-[#2C2C2E]"] {
+  background: var(--bg-input) !important;
+}
+
+.light-theme .border-white\/\[0\.08\],
+.light-theme [class*="border-white/[0.08]"] {
+  border-color: var(--border-color) !important;
+}
+
+.light-theme .bg-\[\#4A2C3F\],
+.light-theme [class*="bg-[#4A2C3F]"] {
+  background: var(--accent-color) !important;
+}
+
+.light-theme .hover\:bg-\[\#5A3C4F\]:hover,
+.light-theme [class*="hover:bg-[#5A3C4F]"]:hover {
+  background: var(--accent-color) !important;
+  opacity: 0.85;
+}
+
+/* Light theme — Select/Dropdown content */
+.light-theme [data-radix-popper-content-wrapper] [class*="bg-[#2C2C2E]"],
+.light-theme [role="listbox"] [class*="bg-[#2C2C2E]"] {
+  background: var(--bg-card) !important;
+}
+
+/* Scrollbar for light theme */
+.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#4A2C3F] to-[#E85D4A];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+/* Status badges */
+.badge-active {
+  @apply bg-green-500/20 text-green-400 border-green-500/30;
+}
+
+.badge-inactive {
+  @apply bg-gray-500/20 text-gray-400 border-gray-500/30;
+}
+
+.badge-on-leave {
+  @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/30;
+}
+
+.badge-terminated {
+  @apply bg-red-500/20 text-red-400 border-red-500/30;
+}
+
+.badge-pending {
+  @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/30;
+}
+
+.badge-approved {
+  @apply bg-green-500/20 text-green-400 border-green-500/30;
+}
+
+.badge-rejected {
+  @apply bg-red-500/20 text-red-400 border-red-500/30;
+}
+
+.badge-present {
+  @apply bg-green-500/20 text-green-400;
+}
+
+.badge-late {
+  @apply bg-yellow-500/20 text-yellow-400;
+}
+
+.badge-absent {
+  @apply bg-red-500/20 text-red-400;
+}
+
+/* ─── Theme-aware utility classes ─── */
+.theme-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+.theme-input {
+  background: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+.theme-text-primary {
+  color: var(--text-primary);
+}
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+.theme-text-muted {
+  color: var(--text-muted);
+}
+.theme-border {
+  border-color: var(--border-color);
+}
+
+/* ─── Barcode Scanner Animations ─── */
+@keyframes scan-line {
+  0% { top: 10%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 90%; opacity: 0; }
+}
+.animate-scan {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+/* ─── Print Styles for Barcode Stickers ─── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+  .print-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
