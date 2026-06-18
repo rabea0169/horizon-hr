@@ -44,6 +44,7 @@ export default function Login() {
   const loginMut = trpc.auth.horizonLogin.useMutation({
     onSuccess: (data) => {
       if (data.success && data.token) {
+        localStorage.setItem("hr_token", data.token);
         sessionStorage.setItem("hr_auth", "1");
         sessionStorage.setItem("hr_session_user", JSON.stringify(data.user));
         window.location.reload();

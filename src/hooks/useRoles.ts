@@ -137,6 +137,7 @@ export function useRoles() {
   const logout = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem("hr_auth");
+    localStorage.removeItem("hr_token");
   }, []);
 
   return {
