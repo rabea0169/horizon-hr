@@ -31,7 +31,7 @@ export default function Employees() {
 
   const pageSize = 10;
   const filtered = employees.filter((e) => {
-    const matchSearch = !search || e.fullName.includes(search) || e.email.includes(search) || e.employeeCode.includes(search);
+    const matchSearch = !search || String(e.fullName ?? "").includes(search) || String(e.email ?? "").includes(search) || String(e.employeeCode ?? "").includes(search);
     const matchStatus = statusFilter === "all" || e.status === statusFilter;
     return matchSearch && matchStatus;
   });

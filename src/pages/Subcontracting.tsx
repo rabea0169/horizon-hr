@@ -34,7 +34,7 @@ export default function Subcontracting() {
     setDialog(false); reset();
   };
 
-  const filtered = subcontracts.filter((s) => s.code.includes(search) || s.contractorName.includes(search));
+  const filtered = subcontracts.filter((s) => String(s.code ?? "").includes(search) || String(s.contractorName ?? "").includes(search));
 
   return (
     <div className="space-y-6" dir="rtl">

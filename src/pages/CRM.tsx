@@ -45,8 +45,8 @@ export default function CRM() {
     setIntDialog(false); resetInt();
   };
 
-  const filteredCust = customers.filter((c) => c.name.includes(search) || c.phone.includes(search));
-  const filteredInt = interactions.filter((i) => i.customerName.includes(search));
+  const filteredCust = customers.filter((c) => String(c.name ?? "").includes(search) || String(c.phone ?? "").includes(search));
+  const filteredInt = interactions.filter((i) => String(i.customerName ?? "").includes(search));
 
   return (
     <div className="space-y-6" dir="rtl">

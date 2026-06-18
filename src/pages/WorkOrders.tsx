@@ -44,7 +44,7 @@ export default function WorkOrders() {
     setDialog(false); reset();
   };
 
-  const filtered = workOrders.filter((o) => o.orderCode.includes(search) || (o.modelName && o.modelName.includes(search)));
+  const filtered = workOrders.filter((o) => String(o.orderCode ?? "").includes(search) || String(o.modelName ?? "").includes(search));
 
   return (
     <div className="space-y-6" dir="rtl">

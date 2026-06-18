@@ -1011,8 +1011,19 @@ export function useWorkOrders() {
     [toggleStageMut, utils]
   );
 
+  const safeWorkOrders = (data ?? []).map((o: any) => ({
+    ...o,
+    orderCode: String(o.orderCode ?? o.orderNumber ?? ""),
+    modelName: String(o.modelName ?? ""),
+    stages: Array.isArray(o.stages) ? o.stages : [],
+    priority: o.priority ?? "normal",
+    status: o.status ?? "pending",
+    startDate: String(o.startDate ?? ""),
+    quantity: Number(o.quantity ?? 0),
+  }));
+
   return {
-    data: (data ?? []) as WorkOrder[],
+    data: safeWorkOrders as unknown as WorkOrder[],
     save: () => {},
     create,
     update,
@@ -1103,16 +1114,30 @@ export function useMRPRecords() {
     [deleteMut, utils]
   );
 
+  const dbStatusToUiStatus = (dbStatus: string | null | undefined): MRPRecord["status"] => {
+    switch (dbStatus) {
+      case "available": return "sufficient";
+      case "shortage": return "critical";
+      case "ordered": return "order_needed";
+      case "planned": return "planned";
+      case "sufficient": return "sufficient";
+      case "low": return "low";
+      case "critical": return "critical";
+      case "order_needed": return "order_needed";
+      default: return "planned";
+    }
+  };
+
   const mappedData = (data ?? []).map((r: any) => ({
     id: r.id,
-    materialName: r.item?.name ?? "Unknown",
-    category: r.item?.category ?? "other",
-    currentStock: r.availableQuantity ?? r.item?.quantity ?? 0,
-    minLevel: r.item?.minStock ?? 0,
-    requiredQty: r.requiredQuantity ?? 0,
-    unit: r.item?.unit ?? "قطعة",
+    materialName: String(r.item?.name ?? r.materialName ?? "مادة غير معروفة"),
+    category: String(r.item?.category ?? "other"),
+    currentStock: Number(r.availableQuantity ?? r.item?.quantity ?? 0),
+    minLevel: Number(r.item?.minStock ?? 0),
+    requiredQty: Number(r.requiredQuantity ?? 0),
+    unit: String(r.item?.unit ?? "قطعة"),
     productionOrders: r.productionOrderId ? [String(r.productionOrderId)] : [],
-    status: r.status ?? "planned",
+    status: dbStatusToUiStatus(r.status),
     lastUpdated: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString()
   }));
 

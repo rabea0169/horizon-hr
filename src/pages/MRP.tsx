@@ -38,7 +38,7 @@ export default function MRP() {
     setDialog(false); reset();
   };
 
-  const filtered = mrpRecords.filter((r) => r.materialName.includes(search));
+  const filtered = mrpRecords.filter((r) => String(r.materialName ?? "").includes(search));
 
   return (
     <div className="space-y-6" dir="rtl">

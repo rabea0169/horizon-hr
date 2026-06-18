@@ -13,8 +13,11 @@ import { Plus, Pencil, Trash2, Scissors, CheckCircle2 } from "lucide-react";
 const statusConfig: Record<string, { label: string; color: string }> = {
   pending: { label: "معلق", color: "bg-yellow-500/15 text-yellow-400" },
   in_progress: { label: "جاري", color: "bg-blue-500/15 text-blue-400" },
+  cutting: { label: "يُقَص", color: "bg-blue-500/15 text-blue-400" },
   completed: { label: "مكتمل", color: "bg-emerald-500/15 text-emerald-400" },
+  cancelled: { label: "ملغى", color: "bg-gray-500/15 text-gray-400" },
 };
+const getSafeStatus = (status: string | undefined | null) => statusConfig[status ?? ""] ?? { label: String(status ?? ""), color: "bg-gray-500/15 text-gray-400" };
 
 const defaultStages = [
   { name: "فرد القماش" },
@@ -81,8 +84,8 @@ export default function Cutting() {
     setDialog(false); reset();
   };
 
-  const cutters = employees.filter((e) => e.departmentId === 1 || e.jobTitle.includes("قص"));
-  const filtered = cuttingOrders.filter((o) => o.orderCode.includes(search) || (o.modelName && o.modelName.includes(search)));
+  const cutters = employees.filter((e) => e.departmentId === 1 || String(e.jobTitle ?? "").includes("قص"));
+  const filtered = cuttingOrders.filter((o) => String(o.orderCode ?? "").includes(search) || String(o.modelName ?? "").includes(search));
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -100,7 +103,7 @@ export default function Cutting() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {filtered.map((order) => {
-          const s = statusConfig[order.status];
+          const s = getSafeStatus(order.status);
           return (
             <Card key={order.id} style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
               <CardHeader className="pb-2">

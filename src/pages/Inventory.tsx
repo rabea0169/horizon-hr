@@ -40,7 +40,7 @@ export default function InventoryPage() {
   const { data: items, create, remove } = useInventory();
 
   const filtered = items.filter((item) => {
-    const matchSearch = search === "" || item.name.includes(search) || item.code.includes(search) || (item.supplier || "").includes(search);
+    const matchSearch = search === "" || String(item.name ?? "").includes(search) || String(item.code ?? "").includes(search) || String(item.supplier ?? "").includes(search);
     const matchCat = catFilter === "all" || item.category === catFilter;
     return matchSearch && matchCat;
   });

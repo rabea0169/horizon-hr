@@ -122,7 +122,7 @@ export default function ProductionModels() {
   };
 
   const filteredModels = models.filter((m) =>
-    m.name.includes(search) || m.code.includes(search) || (m.customerName && m.customerName.includes(search))
+    String(m.name ?? "").includes(search) || String(m.code ?? "").includes(search) || String(m.customerName ?? "").includes(search)
   );
 
   return (

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { advances, bonusPenalties, pieceRateRecords, costCalculations, InsertAdvance, InsertBonusPenalty, InsertPieceRateRecord, InsertCostCalculation } from "@db/schema";
+import { advances, bonusPenalties, pieceRateRecords, costCalculations } from "@db/schema";
+import type { InsertAdvance, InsertBonusPenalty, InsertPieceRateRecord, InsertCostCalculation } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const advanceRouter = createRouter({
@@ -20,7 +21,7 @@ export const advanceRouter = createRouter({
     .input(z.object({ employeeId: z.number(), amount: z.string(), reason: z.string().optional(), repaymentAmount: z.string().optional() }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const data = { ...input, amount: parseFloat(input.amount), repaymentAmount: input.repaymentAmount ? parseFloat(input.repaymentAmount) : null };
+      const data = { ...input, repaymentAmount: input.repaymentAmount ?? null };
       const [result] = await db.insert(advances).values(data as InsertAdvance).$returningId();
       return db.query.advances.findFirst({ where: eq(advances.id, result.id), with: { employee: true } });
     }),
@@ -67,7 +68,7 @@ export const bonusPenaltyRouter = createRouter({
     .input(z.object({ employeeId: z.number(), type: z.enum(["bonus", "penalty"]), category: z.string(), amount: z.string(), reason: z.string().optional(), month: z.string() }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const data = { ...input, amount: parseFloat(input.amount) };
+      const data = { ...input };
       const [result] = await db.insert(bonusPenalties).values(data as InsertBonusPenalty).$returningId();
       return db.query.bonusPenalties.findFirst({ where: eq(bonusPenalties.id, result.id), with: { employee: true } });
     }),
@@ -97,7 +98,7 @@ export const pieceRateRouter = createRouter({
     .input(z.object({ employeeId: z.number(), modelId: z.number(), stageId: z.number().optional(), quantity: z.number(), unitPrice: z.string(), totalAmount: z.string(), date: z.string(), notes: z.string().optional() }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const data = { ...input, unitPrice: parseFloat(input.unitPrice), totalAmount: parseFloat(input.totalAmount), date: new Date(input.date) };
+      const data = { ...input, date: new Date(input.date) };
       const [result] = await db.insert(pieceRateRecords).values(data as InsertPieceRateRecord).$returningId();
       return db.query.pieceRateRecords.findFirst({ where: eq(pieceRateRecords.id, result.id), with: { employee: true, model: true } });
     }),
@@ -109,8 +110,8 @@ export const pieceRateRouter = createRouter({
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
       if (data.quantity !== undefined) updateData.quantity = data.quantity;
-      if (data.unitPrice !== undefined) updateData.unitPrice = parseFloat(data.unitPrice);
-      if (data.totalAmount !== undefined) updateData.totalAmount = parseFloat(data.totalAmount);
+      if (data.unitPrice !== undefined) updateData.unitPrice = data.unitPrice;
+      if (data.totalAmount !== undefined) updateData.totalAmount = data.totalAmount;
       if (data.notes !== undefined) updateData.notes = data.notes;
       await db.update(pieceRateRecords).set(updateData).where(eq(pieceRateRecords.id, id));
       return db.query.pieceRateRecords.findFirst({ where: eq(pieceRateRecords.id, id), with: { employee: true, model: true } });
@@ -160,9 +161,6 @@ export const costCalculationRouter = createRouter({
     .mutation(async ({ input }) => {
       const db = getDb();
       const data: Record<string, unknown> = { ...input };
-      ["fabricCost", "laborCost", "overheadCost", "trimCost", "otherCost", "totalCost", "profitMargin", "sellingPrice"].forEach((k) => {
-        if (data[k] !== undefined) data[k] = parseFloat(data[k] as string);
-      });
       const [result] = await db.insert(costCalculations).values(data as InsertCostCalculation).$returningId();
       return db.query.costCalculations.findFirst({ where: eq(costCalculations.id, result.id), with: { model: true } });
     }),
@@ -173,7 +171,7 @@ export const costCalculationRouter = createRouter({
       const { id, sellingPrice, ...data } = input;
       const db = getDb();
       const updateData: Record<string, unknown> = { ...data };
-      if (sellingPrice !== undefined) updateData.sellingPrice = parseFloat(sellingPrice);
+      if (sellingPrice !== undefined) updateData.sellingPrice = sellingPrice;
       await db.update(costCalculations).set(updateData).where(eq(costCalculations.id, id));
       return db.query.costCalculations.findFirst({ where: eq(costCalculations.id, id), with: { model: true } });
     }),

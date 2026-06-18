@@ -63,8 +63,8 @@ export default function Suppliers() {
     setOrderDialog(false); resetOrder();
   };
 
-  const filteredSup = suppliers.filter((s) => s.name.includes(search) || s.code.includes(search));
-  const filteredOrders = orders.filter((o) => o.supplierName.includes(search) || o.orderCode.includes(search));
+  const filteredSup = suppliers.filter((s) => String(s.name ?? "").includes(search) || String(s.code ?? "").includes(search));
+  const filteredOrders = orders.filter((o) => String(o.supplierName ?? "").includes(search) || String(o.orderCode ?? "").includes(search));
 
   return (
     <div className="space-y-6" dir="rtl">

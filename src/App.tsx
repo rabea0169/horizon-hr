@@ -68,9 +68,11 @@ function AppRoutes() {
                       key={mod.id}
                       path={mod.path}
                       element={
-                        <RoleGuard path={mod.path}>
-                          <mod.component />
-                        </RoleGuard>
+                        <ErrorBoundary>
+                          <RoleGuard path={mod.path}>
+                            <mod.component />
+                          </RoleGuard>
+                        </ErrorBoundary>
                       }
                     />
                   ))}
