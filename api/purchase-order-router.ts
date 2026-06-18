@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { purchaseOrders, purchaseOrderItems, InsertPurchaseOrder } from "@db/schema";
+import { purchaseOrders, purchaseOrderItems } from "@db/schema";
+import type { InsertPurchaseOrder } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const purchaseOrderRouter = createRouter({
@@ -49,12 +50,12 @@ export const purchaseOrderRouter = createRouter({
       const { items, ...poData } = input;
       const [result] = await db.insert(purchaseOrders).values({
         ...poData,
-        subtotal: parseFloat(poData.subtotal),
-        vatRate: poData.vatRate ? parseFloat(poData.vatRate) : 14,
-        vatAmount: poData.vatAmount ? parseFloat(poData.vatAmount) : 0,
-        discountAmount: poData.discountAmount ? parseFloat(poData.discountAmount) : 0,
-        shippingCost: poData.shippingCost ? parseFloat(poData.shippingCost) : 0,
-        totalAmount: parseFloat(poData.totalAmount),
+        subtotal: poData.subtotal,
+        vatRate: poData.vatRate ?? "14",
+        vatAmount: poData.vatAmount ?? "0",
+        discountAmount: poData.discountAmount ?? "0",
+        shippingCost: poData.shippingCost ?? "0",
+        totalAmount: poData.totalAmount,
         orderDate: new Date(poData.orderDate),
         expectedDeliveryDate: poData.expectedDeliveryDate ? new Date(poData.expectedDeliveryDate) : null,
       } as InsertPurchaseOrder).$returningId();

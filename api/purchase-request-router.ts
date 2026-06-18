@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { purchaseRequests, purchaseRequestItems, purchaseOrders, purchaseOrderItems, integrationLogs, InsertPurchaseRequest, InsertPurchaseOrder } from "@db/schema";
+import { purchaseRequests, purchaseRequestItems, purchaseOrders, purchaseOrderItems, integrationLogs } from "@db/schema";
+import type { InsertPurchaseRequest, InsertPurchaseOrder } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const purchaseRequestRouter = createRouter({
@@ -10,7 +11,7 @@ export const purchaseRequestRouter = createRouter({
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
-      if (input?.status) conditions.push(eq(purchaseRequests.status, input.status as "draft" | "pending" | "approved" | "ordered" | "partially_received" | "received" | "cancelled"));
+      if (input?.status) conditions.push(eq(purchaseRequests.status, input.status as any));
       if (input?.department) conditions.push(eq(purchaseRequests.department, input.department));
       if (input?.priority) conditions.push(eq(purchaseRequests.priority, input.priority as "low" | "normal" | "high" | "urgent"));
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
@@ -61,7 +62,7 @@ export const purchaseRequestRouter = createRouter({
     .mutation(async ({ input }) => {
       const db = getDb();
       
-      const result = await db.transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         await tx.update(purchaseRequests).set({ status: "approved", approvedBy: input.approvedBy, approvedAt: new Date() }).where(eq(purchaseRequests.id, input.id));
         
         if (input.autoConvertToPo) {
@@ -94,7 +95,7 @@ export const purchaseRequestRouter = createRouter({
               orderDate: new Date(),
               expectedDeliveryDate: pr.requiredDate,
               subtotal: String(subtotal),
-              vatRate: 14,
+              vatRate: "14",
               vatAmount: String(vatAmount),
               totalAmount: String(totalAmount),
               status: "draft",

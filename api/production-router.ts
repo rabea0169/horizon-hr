@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { productionLines, productionOrders, dailyProduction, productionModels, modelStages, InsertProductionOrder, InsertDailyProduction, InsertModelStage } from "@db/schema";
+import { productionLines, productionOrders, dailyProduction, productionModels, modelStages } from "@db/schema";
+import type { InsertProductionOrder, InsertDailyProduction, InsertModelStage } from "@db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 
 export const productionLineRouter = createRouter({
@@ -173,7 +174,7 @@ export const modelStageRouter = createRouter({
     .input(z.object({ modelId: z.number(), name: z.string().min(1), sequence: z.number(), unitPrice: z.string().optional(), description: z.string().optional() }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const [result] = await db.insert(modelStages).values({ ...input, unitPrice: input.unitPrice ? parseFloat(input.unitPrice) : 0 } as InsertModelStage).$returningId();
+      const [result] = await db.insert(modelStages).values({ ...input, unitPrice: input.unitPrice ?? "0" } as InsertModelStage).$returningId();
       return db.query.modelStages.findFirst({ where: eq(modelStages.id, result.id) });
     }),
 
@@ -183,7 +184,7 @@ export const modelStageRouter = createRouter({
       const db = getDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = { ...data };
-      if (data.unitPrice !== undefined) updateData.unitPrice = parseFloat(data.unitPrice);
+      if (data.unitPrice !== undefined) updateData.unitPrice = data.unitPrice;
       await db.update(modelStages).set(updateData).where(eq(modelStages.id, id));
       return db.query.modelStages.findFirst({ where: eq(modelStages.id, id) });
     }),

@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { qcRecords, mrpRecords, challans, subcontracts, bundles, bundleTracking, cuttingOrders, workOrders, shifts, activities, InsertBundle, employees, productionModels, bomRecords, inventoryItems } from "@db/schema";
+import { qcRecords, mrpRecords, challans, subcontracts, bundles, bundleTracking, cuttingOrders, workOrders, shifts, activities, employees, bomRecords, inventoryItems } from "@db/schema";
 import { eq, count, desc, sql, and } from "drizzle-orm";
 
 const stageEnum = ["fabric", "cutting", "sewing", "pressing", "packing"] as const;
-const dbStageEnum = ["inline", "input", "output", "final", "packing"] as const;
 
 const stageToDb: Record<string, string> = { fabric: "inline", cutting: "input", sewing: "output", pressing: "final", packing: "packing" };
 const stageFromDb: Record<string, string> = { inline: "fabric", input: "cutting", output: "sewing", final: "pressing", packing: "packing" };
@@ -17,7 +16,7 @@ export const qcRouter = createRouter({
       const db = getDb();
       const conditions = [];
       if (input?.orderId) conditions.push(eq(qcRecords.orderId, input.orderId));
-      if (input?.stage) conditions.push(eq(qcRecords.stage, stageToDb[input.stage] ?? input.stage));
+      if (input?.stage) conditions.push(eq(qcRecords.stage, (stageToDb[input.stage] ?? input.stage) as any));
       const where = conditions.length > 0 ? and(...conditions) : undefined;
       const rows = await db
         .select()
@@ -47,12 +46,12 @@ export const qcRouter = createRouter({
       const db = getDb();
       let inspectedById: number | undefined;
       if (input.inspectedBy) {
-        const emp = await db.query.employees.findFirst({ where: eq(employees.name, input.inspectedBy) });
+        const emp = await db.query.employees.findFirst({ where: eq(employees.fullName, input.inspectedBy) });
         if (emp) inspectedById = emp.id;
       }
       const [result] = await db.insert(qcRecords).values({
         bundleId: input.bundleId,
-        stage: stageToDb[input.stage] ?? input.stage,
+        stage: (stageToDb[input.stage] ?? input.stage) as any,
         checkedQuantity: input.checkedQty,
         passedQuantity: input.passedQty,
         defectedQuantity: input.failedQty,
@@ -87,7 +86,7 @@ export const qcRouter = createRouter({
       const db = getDb();
       const { id, ...data } = input;
       const updateData: Record<string, unknown> = {};
-      if (data.stage) updateData.stage = stageToDb[data.stage] ?? data.stage;
+      if (data.stage) updateData.stage = (stageToDb[data.stage] ?? data.stage) as any;
       if (data.bundleId !== undefined) updateData.bundleId = data.bundleId;
       if (data.checkedQty !== undefined) updateData.checkedQuantity = data.checkedQty;
       if (data.passedQty !== undefined) updateData.passedQuantity = data.passedQty;
@@ -95,7 +94,7 @@ export const qcRouter = createRouter({
       if (data.defects !== undefined) updateData.defects = typeof data.defects === "string" ? data.defects : JSON.stringify(data.defects);
       if (data.date) updateData.date = new Date(data.date);
       if (data.inspectedBy) {
-        const emp = await db.query.employees.findFirst({ where: eq(employees.name, data.inspectedBy) });
+        const emp = await db.query.employees.findFirst({ where: eq(employees.fullName, data.inspectedBy) });
         if (emp) updateData.inspectedBy = emp.id;
       }
       await db.update(qcRecords).set(updateData).where(eq(qcRecords.id, id));
@@ -144,7 +143,7 @@ function mapQcToFrontend(qc: any, emp?: any, bundle?: any) {
     bundleCode: bundle?.bundleCode,
     modelId: qc.orderId,
     modelName: "",
-    inspectedBy: emp?.name ?? String(qc.inspectedBy ?? ""),
+    inspectedBy: emp?.fullName ?? String(qc.inspectedBy ?? ""),
     date: qc.date ? new Date(qc.date).toISOString().split("T")[0] : "",
     checkedQty: checked,
     passedQty: passed,
@@ -211,7 +210,7 @@ export const mrpRouter = createRouter({
 
       const [result] = await db.insert(mrpRecords).values({
         productionOrderId: prodOrderId,
-        itemId: item.id,
+        itemId: item!.id,
         requiredQuantity: requiredQty,
         availableQuantity: availableQty,
         shortage: Math.max(0, requiredQty - availableQty),
@@ -695,7 +694,7 @@ export const bomRouter = createRouter({
         
         await db.insert(bomRecords).values({
           modelId: input.modelId,
-          itemId: invItem.id,
+          itemId: invItem!.id,
           quantity: String(item.quantity),
           unit: item.unit,
           notes: item.notes ?? ""
@@ -742,7 +741,7 @@ export const bomRouter = createRouter({
         
         await db.insert(bomRecords).values({
           modelId,
-          itemId: invItem.id,
+          itemId: invItem!.id,
           quantity: String(item.quantity),
           unit: item.unit,
           notes: item.notes ?? ""
