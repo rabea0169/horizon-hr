@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { goodsReceipts, goodsReceiptItems, purchaseOrders, inventoryItems, inventoryTransactions, integrationLogs, InsertGoodsReceipt, InsertInventoryTransaction } from "@db/schema";
+import { goodsReceipts, goodsReceiptItems, purchaseOrders, inventoryItems, inventoryTransactions, integrationLogs } from "@db/schema";
+import type { InsertGoodsReceipt, InsertInventoryTransaction } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const goodsReceiptRouter = createRouter({
@@ -49,9 +50,9 @@ export const goodsReceiptRouter = createRouter({
       const grId = await db.transaction(async (tx) => {
         const [result] = await tx.insert(goodsReceipts).values({
           ...grData,
-          subtotal: grData.subtotal ? parseFloat(grData.subtotal) : 0,
-          vatAmount: grData.vatAmount ? parseFloat(grData.vatAmount) : 0,
-          totalAmount: grData.totalAmount ? parseFloat(grData.totalAmount) : 0,
+          subtotal: grData.subtotal ?? "0",
+          vatAmount: grData.vatAmount ?? "0",
+          totalAmount: grData.totalAmount ?? "0",
           receiptDate: new Date(grData.receiptDate),
         } as InsertGoodsReceipt).$returningId();
 

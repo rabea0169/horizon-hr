@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { rfqs, rfqItems, rfqResponses, InsertRFQ } from "@db/schema";
+import { rfqs, rfqItems, rfqResponses } from "@db/schema";
+import type { InsertRFQ } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const rfqRouter = createRouter({

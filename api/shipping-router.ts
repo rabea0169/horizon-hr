@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { shipments, shipmentItems, InsertShipment } from "@db/schema";
+import { shipments, shipmentItems } from "@db/schema";
+import type { InsertShipment } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const shippingRouter = createRouter({
@@ -39,7 +40,7 @@ export const shippingRouter = createRouter({
       const { items, ...shipData } = input;
       const [result] = await db.insert(shipments).values({
         ...shipData,
-        shippingCost: shipData.shippingCost ? parseFloat(shipData.shippingCost) : 0,
+        shippingCost: shipData.shippingCost ?? "0",
         shippingDate: new Date(shipData.shippingDate),
         estimatedDeliveryDate: shipData.estimatedDeliveryDate ? new Date(shipData.estimatedDeliveryDate) : null,
       } as InsertShipment).$returningId();

@@ -36,7 +36,7 @@ export default function PieceRatePage() {
   // Filter records
   const filteredRecords = useMemo(() => {
     return pieceRecords.filter((r) => {
-      const matchMonth = (r.date instanceof Date ? r.date.toISOString() : String(r.date || "")).startsWith(selectedMonth);
+      const matchMonth = String(r.date || "").startsWith(selectedMonth);
       const matchEmp = selectedEmployee === "all" || String(r.employeeId) === selectedEmployee;
       const matchModel = selectedModel === "all" || String(r.modelId) === selectedModel;
       return matchMonth && matchEmp && matchModel;
@@ -50,8 +50,8 @@ export default function PieceRatePage() {
       const piecePay = empRecords.reduce((sum, r) => sum + Number(r.total), 0);
       const totalPieces = empRecords.reduce((sum, r) => sum + r.quantity, 0);
       const basicPay = Number(emp.salary || 0);
-      const empBonuses = bonuses.filter((b) => b.employeeId === emp.id && b.type === "bonus" && (b.date instanceof Date ? b.date.toISOString() : String(b.date || "")).startsWith(selectedMonth)).reduce((sum, b) => sum + Number(b.amount), 0);
-      const empPenalties = bonuses.filter((b) => b.employeeId === emp.id && b.type === "penalty" && (b.date instanceof Date ? b.date.toISOString() : String(b.date || "")).startsWith(selectedMonth)).reduce((sum, b) => sum + Number(b.amount), 0);
+      const empBonuses = bonuses.filter((b) => b.employeeId === emp.id && b.type === "bonus" && String(b.date || "").startsWith(selectedMonth)).reduce((sum, b) => sum + Number(b.amount), 0);
+      const empPenalties = bonuses.filter((b) => b.employeeId === emp.id && b.type === "penalty" && String(b.date || "").startsWith(selectedMonth)).reduce((sum, b) => sum + Number(b.amount), 0);
       const empAdvDeduction = advances.filter((a) => a.employeeId === emp.id && a.status === "approved" && a.monthlyDeduction).reduce((sum, a) => sum + Number(a.monthlyDeduction), 0);
       const totalPay = basicPay + piecePay + empBonuses - empPenalties - empAdvDeduction;
 

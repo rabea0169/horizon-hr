@@ -18,9 +18,9 @@ interface WorkerStatus {
   employeeId: number;
   employeeName: string;
   employeeCode: string;
-  status: "present" | "absent" | "late" | "not-scanned";
-  checkIn?: string;
-  checkOut?: string;
+  status: "present" | "absent" | "late" | "on_leave" | "half_day" | "not-scanned";
+  checkIn?: string | Date | null;
+  checkOut?: string | Date | null;
   lineName?: string;
 }
 
@@ -43,6 +43,7 @@ export default function MobileApp() {
   const { data: dailyProd } = trpc.dailyProduction.list.useQuery();
   const { data: attendanceList } = trpc.attendance.list.useQuery();
   const { data: employees } = trpc.employee.list.useQuery({ pageSize: 50 });
+  const { data: orders } = trpc.productionOrder.list.useQuery();
 
   // ── Clock in/out mutation ──
   const clockMut = trpc.attendance.create.useMutation({
@@ -159,11 +160,11 @@ export default function MobileApp() {
   const todayProd = (dailyProd ?? []).filter((d: any) => (d.date instanceof Date ? d.date.toISOString() : String(d.date || "")).startsWith(today));
   const totalProduced = todayProd.reduce((s: number, d: any) => s + (d.produced || 0), 0);
   const activeLines = (lines ?? []).filter((l: any) => l.status === "active").length;
-  const presentWorkers = (attendanceList ?? []).filter((a: any) => a.status === "present" || a.status === "late").length;
+  const presentWorkers = (attendanceList?.attendance ?? []).filter((a: any) => a.status === "present" || a.status === "late").length;
 
   // ── Worker list ──
   const workerStatuses: WorkerStatus[] = (employees?.employees ?? []).slice(0, 20).map((emp: any) => {
-    const att = (attendanceList ?? []).find((a: any) => a.employeeId === emp.id);
+    const att = (attendanceList?.attendance ?? []).find((a: any) => a.employeeId === emp.id);
     return {
       employeeId: emp.id,
       employeeName: emp.fullName,

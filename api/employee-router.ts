@@ -95,6 +95,7 @@ export const employeeRouter = createRouter({
         salary: z.string().optional(),
         status: z.enum(["active", "on_leave", "inactive", "terminated"]).default("active"),
         employmentType: z.enum(["full_time", "part_time", "contract", "intern"]).default("full_time"),
+        salaryType: z.enum(["monthly", "piece_rate", "mixed"]).default("monthly"),
       })
     )
     .mutation(async ({ input }) => {
@@ -128,6 +129,7 @@ export const employeeRouter = createRouter({
         salary: z.string().optional(),
         status: z.enum(["active", "on_leave", "inactive", "terminated"]).optional(),
         employmentType: z.enum(["full_time", "part_time", "contract", "intern"]).optional(),
+        salaryType: z.enum(["monthly", "piece_rate", "mixed"]).optional(),
       })
     )
     .mutation(async ({ input }) => {

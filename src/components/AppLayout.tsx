@@ -9,7 +9,7 @@ import {
   useSidebarConfig, CATEGORY_NAMES, CATEGORY_COLORS,
 } from "@/hooks/useSidebarConfig";
 import type { SidebarModule } from "@/hooks/useSidebarConfig";
-import { getModulesByCategory, type AppModule, type ModuleCategory, categoryMapping } from "../modules.config";
+import { getModulesByCategory, type AppModule, categoryMapping } from "../modules.config";
 import {
   LayoutDashboard, Users, Building2, Clock, CalendarDays,
   TrendingUp, Briefcase, CreditCard, Settings, Search, Bell,

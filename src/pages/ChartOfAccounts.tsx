@@ -31,7 +31,7 @@ export default function ChartOfAccounts() {
   const [typeFilter, setTypeFilter] = useState("__all__");
   const [activeTab, setActiveTab] = useState("chart");
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [fiscalYear, setFiscalYear] = useState("2025");
+  const [fiscalYear] = useState("2025");
   const [form, setForm] = useState({ code: "", name: "", nameEn: "", type: "asset" as string, category: "current_asset" as string, parentId: "", openingBalance: "0", notes: "" });
 
   const utils = trpc.useUtils();

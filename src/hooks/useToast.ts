@@ -9,7 +9,6 @@ type ToastOptions = {
 export function useToast() {
   const toast = (options: ToastOptions) => {
     const { title, description, variant } = options;
-    const message = description ? `${title}\n${description}` : (title || "");
 
     switch (variant) {
       case "destructive":

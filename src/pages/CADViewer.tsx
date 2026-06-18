@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   FileUp, Grid3X3, ZoomIn, ZoomOut, RotateCcw, Move,
-  Ruler, Layers, Eye, Download, ChevronRight, Shapes,
-  ArrowUpDown, Maximize2, FileText, Circle, Square
+  Ruler, Layers, Eye, Download, Shapes,
+  ArrowUpDown, Maximize2, FileText
 } from "lucide-react";
 
 /** Parsed DXF entity */
@@ -51,7 +51,7 @@ export default function CADViewer() {
   const [fabricWidth, setFabricWidth] = useState(152); // cm
   const [markerLength, setMarkerLength] = useState(0);
   const [totalPieces, setTotalPieces] = useState(0);
-  const [efficiency, setEfficiency] = useState(82.5);
+  const [efficiency] = useState(82.5);
   const [layers, setLayers] = useState(25);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);

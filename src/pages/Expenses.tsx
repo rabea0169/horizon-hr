@@ -16,8 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/useToast";
 import {
   DollarSign, TrendingUp, Receipt, Filter, Plus, Search,
-  Zap, Home, Droplets, Wrench, Truck, Wifi, Phone,
-  CircleDollarSign, CalendarDays, AlertTriangle,
+  AlertTriangle,
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -36,16 +35,7 @@ const statusLabels: Record<string, string> = {
   paid: "مدفوع",
 };
 
-const categoryIcons: Record<string, typeof Zap> = {
-  electricity: Zap,
-  rent: Home,
-  water: Droplets,
-  maintenance: Wrench,
-  transport: Truck,
-  internet: Wifi,
-  phone: Phone,
-  other: CircleDollarSign,
-};
+
 
 const paymentMethods: Record<string, string> = {
   cash: "نقدي",
@@ -127,6 +117,8 @@ export default function Expenses() {
     }
     createExpense.mutate({
       ...formData,
+      paymentMethod: formData.paymentMethod as any,
+      recurringFrequency: (formData.recurringFrequency || undefined) as any,
       categoryId: Number(formData.categoryId),
       amount: formData.amount,
       totalAmount: formData.totalAmount || formData.amount,

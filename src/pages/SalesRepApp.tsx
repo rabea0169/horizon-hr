@@ -3,7 +3,7 @@
 //  واجهة محسّنة للموبايل: زيارات — طلبات — تحصيل — GPS
 // ═══════════════════════════════════════════════════════════════
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { trpc } from "@/providers/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/useToast";
 import {
-  MapPin, Navigation, Phone, Calendar, Clock, DollarSign,
+  MapPin, Navigation, Calendar, Clock, DollarSign,
   Plus, CheckCircle, TrendingUp, Users, Package, Target,
   ChevronRight, ClipboardList, CreditCard,
   RefreshCw, Smartphone, UserCheck,
@@ -529,7 +529,7 @@ export default function SalesRepApp() {
                 </div>
               )}
 
-              {visitSummary?.summary?.totalOrderAmount && (
+              {!!visitSummary?.summary?.totalOrderAmount && (
                 <div className="p-4 border rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">إجمالي مبيعات الزيارات</span>

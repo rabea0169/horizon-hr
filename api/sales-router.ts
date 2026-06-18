@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { salesOrders, crmCustomers, crmInteractions, inventoryItems, inventoryTransactions, shipments, integrationLogs, InsertSalesOrder, InsertInventoryTransaction, InsertShipment, InsertCRMInteraction } from "@db/schema";
+import { salesOrders, crmCustomers, crmInteractions, inventoryItems, inventoryTransactions, shipments, integrationLogs } from "@db/schema";
+import type { InsertSalesOrder, InsertInventoryTransaction, InsertShipment, InsertCRMInteraction } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const salesOrderRouter = createRouter({
@@ -11,7 +12,7 @@ export const salesOrderRouter = createRouter({
       const db = getDb();
       const conditions = [];
       if (input?.customerId) conditions.push(eq(salesOrders.customerId, input.customerId));
-      if (input?.status) conditions.push(eq(salesOrders.status, input.status as "pending" | "confirmed" | "in_production" | "completed" | "delivered" | "cancelled" | "invoiced"));
+      if (input?.status) conditions.push(eq(salesOrders.status, input.status as any));
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.salesOrders.findMany({ where, with: { customer: true }, orderBy: desc(salesOrders.createdAt) });
     }),
@@ -30,7 +31,7 @@ export const salesOrderRouter = createRouter({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const data = { ...input, unitPrice: parseFloat(input.unitPrice), totalAmount: parseFloat(input.totalAmount), orderDate: new Date(input.orderDate), deliveryDate: input.deliveryDate ? new Date(input.deliveryDate) : null };
+      const data = { ...input, unitPrice: input.unitPrice, totalAmount: input.totalAmount, orderDate: new Date(input.orderDate), deliveryDate: input.deliveryDate ? new Date(input.deliveryDate) : null };
       const [result] = await db.insert(salesOrders).values(data as InsertSalesOrder).$returningId();
       return db.query.salesOrders.findFirst({ where: eq(salesOrders.id, result.id), with: { customer: true } });
     }),
@@ -140,7 +141,7 @@ export const crmRouter = createRouter({
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
-      if (input?.status) conditions.push(eq(crmCustomers.status, input.status as "active" | "inactive" | "lead" | "prospect" | "churned"));
+      if (input?.status) conditions.push(eq(crmCustomers.status, input.status as any));
       if (input?.search) conditions.push(sql`${crmCustomers.name} LIKE ${"%" + input.search + "%"}`);
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.crmCustomers.findMany({ where, with: { interactions: true }, orderBy: desc(crmCustomers.createdAt) });
@@ -151,7 +152,7 @@ export const crmRouter = createRouter({
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
-      if (input?.status) conditions.push(eq(crmCustomers.status, input.status as "active" | "inactive" | "lead" | "prospect" | "churned"));
+      if (input?.status) conditions.push(eq(crmCustomers.status, input.status as any));
       if (input?.search) conditions.push(sql`${crmCustomers.name} LIKE ${"%" + input.search + "%"}`);
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.crmCustomers.findMany({ where, with: { interactions: true }, orderBy: desc(crmCustomers.createdAt) });
@@ -175,7 +176,20 @@ export const crmRouter = createRouter({
     }),
 
   updateCustomer: adminQuery
-    .input(z.object({ id: z.number(), name: z.string().optional(), status: z.enum(["active", "inactive", "prospect"]).optional(), rating: z.number().optional() }))
+    .input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      contactPerson: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      address: z.string().optional(),
+      city: z.string().optional(),
+      country: z.string().optional(),
+      customerType: z.enum(["wholesale", "retail", "corporate", "export"]).optional(),
+      status: z.enum(["active", "inactive", "prospect"]).optional(),
+      rating: z.number().optional(),
+      notes: z.string().optional()
+    }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
       const db = getDb();

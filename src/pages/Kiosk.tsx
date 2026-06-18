@@ -13,7 +13,7 @@ export default function KioskPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: employees } = useEmployees();
-  const { data: attendance, save: saveAttendance } = useAttendance();
+  const { data: attendance, create: createAttendance, update: updateAttendance } = useAttendance();
 
   const today = new Date().toISOString().split("T")[0];
   const now = new Date();
@@ -42,18 +42,16 @@ export default function KioskPage() {
       return;
     }
     if (existing) {
-      const updated = attendance.map((a) => a.id === existing.id ? { ...a, checkIn: timeStr, status: "present" as const } : a);
-      saveAttendance(updated);
+      updateAttendance(existing.id, { checkIn: timeStr, status: "present" as const });
     } else {
-      saveAttendance([...attendance, {
-        id: Date.now(),
+      createAttendance({
         employeeId: emp.id,
         employeeName: emp.fullName,
         employeeCode: emp.employeeCode,
         date: today,
         checkIn: timeStr,
         status: "present",
-      }]);
+      });
     }
     setMessage({ text: `✓ دخول: ${emp.fullName} - ${timeStr}`, type: "success" });
     setCode("");
@@ -86,8 +84,7 @@ export default function KioskPage() {
     const mins = diffMin % 60;
     const hoursStr = `${hours}.${Math.round((mins / 60) * 10)}`;
 
-    const updated = attendance.map((a) => a.id === existing.id ? { ...a, checkOut: timeStr, hoursWorked: hoursStr } : a);
-    saveAttendance(updated);
+    updateAttendance(existing.id, { checkOut: timeStr, hoursWorked: hoursStr });
     setMessage({ text: `✓ خروج: ${emp.fullName} - ${timeStr} (${hoursStr}س)`, type: "success" });
     setCode("");
     setTimeout(() => setMessage(null), 3000);

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Search, BookOpen, Play, MousePointer, Keyboard,
-  AlertCircle, CheckCircle, ChevronDown, ChevronUp,
-  LogIn, UserPlus, Clock, DollarSign, FileText, HelpCircle
+  Search, BookOpen, Play, MousePointer,
+  AlertCircle, ChevronDown, ChevronUp,
+  Clock, DollarSign, FileText, HelpCircle
 } from "lucide-react";
 
 interface GuideSection {

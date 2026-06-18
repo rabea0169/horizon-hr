@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Camera, ScanLine, Search, Check, X, Clock, Package,
+  Camera, ScanLine, Search, X, Clock,
   ArrowRight, AlertCircle, Smartphone, Zap
 } from "lucide-react";
 
@@ -24,6 +24,21 @@ interface ScanLogEntry {
 }
 
 export default function BarcodeScanner() {
+  // ── State ──
+  const [cameraActive, setCameraActive] = useState(false);
+  const [manualCode, setManualCode] = useState("");
+  const [previewCode, setPreviewCode] = useState("");
+  const [selectedStage, setSelectedStage] = useState("Sewing");
+  const [scanLog, setScanLog] = useState<ScanLogEntry[]>([]);
+  const [torchOn, setTorchOn] = useState(false);
+
+  // ── Camera refs ──
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastCode = useRef<string>("");
+
   // ── tRPC ──
   const scanMut = trpc.barcode.scanBundle.useMutation({
     onSuccess: (data) => {
@@ -39,21 +54,6 @@ export default function BarcodeScanner() {
     { bundleCode: previewCode },
     { enabled: !!previewCode && previewCode.length > 3 }
   );
-
-  // ── Camera refs ──
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastCode = useRef<string>("");
-
-  // ── State ──
-  const [cameraActive, setCameraActive] = useState(false);
-  const [manualCode, setManualCode] = useState("");
-  const [previewCode, setPreviewCode] = useState("");
-  const [selectedStage, setSelectedStage] = useState("Sewing");
-  const [scanLog, setScanLog] = useState<ScanLogEntry[]>([]);
-  const [torchOn, setTorchOn] = useState(false);
 
   // ── Camera control ──
   const startCamera = useCallback(async () => {
@@ -166,7 +166,7 @@ export default function BarcodeScanner() {
       id: `${Date.now()}-${Math.random()}`,
       bundleCode: code,
       bundleId: bundleInfo?.id,
-      modelName: bundleInfo?.modelName,
+      modelName: (bundleInfo as any)?.model?.name,
       stage: selectedStage,
       timestamp: new Date(),
       status,
@@ -334,7 +334,7 @@ export default function BarcodeScanner() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-white/50">الموديل</span>
-                      <span className="text-sm text-white/80">{(bundleInfo as any).model?.name || bundleInfo.modelName || "-"}</span>
+                      <span className="text-sm text-white/80">{(bundleInfo as any).model?.name || "-"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-white/50">المرحلة الحالية</span>

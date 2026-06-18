@@ -76,7 +76,7 @@ export default function Subcontracting() {
                     <TableCell><Badge variant="outline" className={statusColors[s.status]}>{statusLabels[s.status]}</Badge></TableCell>
                     <TableCell className="text-left">
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 w-7" onClick={() => { setEditing(s); setForm({ code: s.code, type: s.type, contractorName: s.contractorName, phone: s.phone || "", modelId: s.modelId ? String(s.modelId) : "", quantity: String(s.quantity), sentDate: s.sentDate, expectedReturn: s.expectedReturn || "", unitPrice: s.unitPrice, notes: s.notes || "" }); setDialog(true); }}><Pencil size={14} style={{ color: "var(--text-muted)" }} /></Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7" onClick={() => { setEditing(s); setForm({ code: s.code || "", type: s.type, contractorName: s.contractorName || "", phone: s.phone || "", modelId: s.modelId ? String(s.modelId) : "", quantity: String(s.quantity), sentDate: s.sentDate || "", expectedReturn: s.expectedReturn || "", unitPrice: s.unitPrice || "", notes: s.notes || "" }); setDialog(true); }}><Pencil size={14} style={{ color: "var(--text-muted)" }} /></Button>
                         <Button size="sm" variant="ghost" className="h-7 w-7" onClick={() => { if (confirm("حذف؟")) remove(s.id); }}><Trash2 size={14} className="text-red-400" /></Button>
                       </div>
                     </TableCell>

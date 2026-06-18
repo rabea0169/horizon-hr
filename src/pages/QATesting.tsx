@@ -1,15 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/providers/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Play, CheckCircle, XCircle, AlertTriangle, Clock, Activity,
-  Shield, Zap, RefreshCw, Database, Server, Globe, Lock,
-  ChevronDown, ChevronUp, FileText
+  Shield, Zap, RefreshCw, FileText
 } from "lucide-react";
 
 interface TestResult {
@@ -36,18 +34,13 @@ function StatusBadge({ status }: { status: TestResult["status"] }) {
 export default function QATesting() {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<TestResult[]>([]);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["all"]));
-  const [activeTab, setActiveTab] = useState("all");
-
-  // ─── tRPC Queries ───
-  const utils = trpc.useUtils();
 
   const departmentQ = trpc.department.list.useQuery(undefined, { enabled: false });
   const employeeQ = trpc.employee.list.useQuery(undefined, { enabled: false });
   const attendanceQ = trpc.attendance.list.useQuery(undefined, { enabled: false });
   const leaveQ = trpc.leave.list.useQuery(undefined, { enabled: false });
   const performanceQ = trpc.performance.list.useQuery(undefined, { enabled: false });
-  const payrollQ = trpc.payroll.list.useQuery(undefined, { enabled: false });
+  const payrollQ = trpc.payroll.list.useQuery({}, { enabled: false });
   const productionLineQ = trpc.productionLine.list.useQuery(undefined, { enabled: false });
   const productionOrderQ = trpc.productionOrder.list.useQuery(undefined, { enabled: false });
   const dailyProductionQ = trpc.dailyProduction.list.useQuery(undefined, { enabled: false });
@@ -137,14 +130,6 @@ export default function QATesting() {
   const totalDuration = results.reduce((s, r) => s + r.duration, 0);
   const avgDuration = results.length > 0 ? Math.round(totalDuration / results.length) : 0;
 
-  const toggleSection = (id: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto" dir="rtl">

@@ -100,7 +100,7 @@ export default function BOM() {
                 </TableBody>
               </Table>
               <div className="flex justify-between items-center pt-3 border-t mt-2" style={{ borderColor: "var(--border-color)" }}>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>آخر تحديث: {new Date(bom.updatedAt).toLocaleDateString("ar-EG")}</span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>آخر تحديث: {bom.updatedAt ? new Date(bom.updatedAt).toLocaleDateString("ar-EG") : "—"}</span>
                 <span className="text-lg font-bold text-amber-400">تكلفة المواد: {Number(bom.totalMaterialCost).toFixed(2)} ج</span>
               </div>
             </CardContent>

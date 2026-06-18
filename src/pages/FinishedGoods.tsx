@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/useToast";
 import {
   Package, PackageCheck, PackageSearch, PackageX, Truck,
-  Search, Plus, ArrowUpDown, Boxes, Barcode, MapPin,
+  Search, Plus, ArrowUpDown, Boxes, MapPin,
 } from "lucide-react";
 
 const statusConfig: Record<string, { color: string; label: string; icon: typeof Package }> = {

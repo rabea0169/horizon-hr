@@ -14,7 +14,7 @@ import { BookOpen, Lock, Plus, Unlock } from "lucide-react";
 
 export default function OpeningBalancesPage() {
   const { toast } = useToast();
-  const [fiscalYear, setFiscalYear] = useState("2025");
+  const fiscalYear = "2025";
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [form, setForm] = useState({ accountId: "", debit: "0", credit: "0", reference: "", notes: "" });
 

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { usePayroll, useEmployees } from "@/hooks/useLocalData";
+import { usePayroll } from "@/hooks/useLocalData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,7 @@ export default function Payroll() {
   const [detailDialog, setDetailDialog] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<number | null>(null);
 
-  const { data: payrollRecords, save: setPayroll } = usePayroll();
-  const { data: employees } = useEmployees();
+  const { data: payrollRecords, process: processPayroll } = usePayroll();
 
   const pageSize = 20;
 
@@ -50,34 +49,8 @@ export default function Payroll() {
   const totalBonus = monthRecords.reduce((sum, p) => sum + Number(p.bonus), 0);
   const totalDeductions = monthRecords.reduce((sum, p) => sum + Number(p.deductions), 0);
 
-  const handleProcessPayroll = () => {
-    // Create payroll records for all active employees who don't have one for this month
-    const activeEmployees = employees.filter((e) => e.status === "active");
-    const existingIds = new Set(monthRecords.map((p) => p.employeeId));
-
-    const newRecords = activeEmployees
-      .filter((e) => !existingIds.has(e.id))
-      .map((e) => {
-        const basic = Number(e.salary || 0);
-        const bonus = Math.round(basic * 0.1 * 100) / 100;
-        const deductions = Math.round(basic * 0.05 * 100) / 100;
-        return {
-          id: Date.now() + e.id,
-          employeeId: e.id,
-          employeeName: e.fullName,
-          employeeCode: e.employeeCode,
-          month: selectedMonth,
-          basicSalary: String(basic),
-          bonus: String(bonus),
-          deductions: String(deductions),
-          netPay: String(basic + bonus - deductions),
-          status: "processed" as const,
-        };
-      });
-
-    if (newRecords.length > 0) {
-      setPayroll([...payrollRecords, ...newRecords]);
-    }
+  const handleProcessPayroll = async () => {
+    await processPayroll(selectedMonth);
   };
 
   return (

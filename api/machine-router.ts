@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { machines, InsertMachine } from "@db/schema";
+import { machines } from "@db/schema";
+import type { InsertMachine } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const machineRouter = createRouter({
@@ -44,7 +45,7 @@ export const machineRouter = createRouter({
       const data: Record<string, unknown> = { ...input };
       if (input.purchaseDate) data.purchaseDate = new Date(input.purchaseDate);
       if (input.nextMaintenance) data.nextMaintenance = new Date(input.nextMaintenance);
-      if (input.cost) data.cost = parseFloat(input.cost);
+      if (input.cost) data.cost = input.cost;
       const [result] = await db.insert(machines).values(data as InsertMachine).$returningId();
       return db.query.machines.findFirst({ where: eq(machines.id, result.id) });
     }),

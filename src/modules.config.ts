@@ -1039,7 +1039,6 @@ export const categoryMapping: Record<ModuleCategory, ERPCategory> = {
   accounting: "accounting",
   assets: "accounting",
   merchandising: "sales",
-  sales: "sales",
   reports: "dashboard", // التقارير تدرج تحت فئة لوحة التحكم
   system: "system",
 };

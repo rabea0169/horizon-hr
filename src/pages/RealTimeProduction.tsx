@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { trpc } from "@/providers/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Factory, Activity, TrendingUp, Users, Clock, AlertTriangle,
+  Factory, Activity, Users, AlertTriangle,
   Play, Pause, RotateCcw, ChevronDown, ChevronUp, Zap,
-  Target, BarChart3, Timer, CheckCircle, XCircle, Gauge
+  Target, Timer, CheckCircle, XCircle, Gauge
 } from "lucide-react";
 
 /** Live line status */
@@ -132,7 +132,7 @@ export default function RealTimeProduction() {
       const lineProd = (dailyProd ?? []).filter((d: any) => d.lineId === line.id && (d.date instanceof Date ? d.date.toISOString() : String(d.date || "")).startsWith(today));
       const producedToday = lineProd.reduce((s: number, d: any) => s + (d.produced || 0), 0);
       const defectedToday = lineProd.reduce((s: number, d: any) => s + (d.defected || 0), 0);
-      const workersPresent = (attendance ?? []).filter((a: any) => a.status === "present" || a.status === "late").length;
+      const workersPresent = (attendance?.attendance ?? []).filter((a: any) => a.status === "present" || a.status === "late").length;
       const targetDaily = line.capacity || line.targetDaily || 500;
       const efficiency = targetDaily > 0 ? Math.round((producedToday / targetDaily) * 100) : 0;
       const hourlyRate = producedToday / (new Date().getHours() - 8 || 1);
@@ -177,7 +177,7 @@ export default function RealTimeProduction() {
 
   // ── Historical sparkline data (simulated) ──
   const sparkData = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => {
+    return Array.from({ length: 12 }, (_) => {
       const base = totals.totalProduced / 12;
       return Math.round(base + (Math.random() - 0.5) * base * 0.4);
     });

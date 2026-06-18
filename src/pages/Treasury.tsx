@@ -78,7 +78,7 @@ export default function Treasury() {
                 <Input placeholder="رقم المستند" value={trxForm.documentNumber} onChange={e => setTrxForm(p => ({ ...p, documentNumber: e.target.value }))} />
                 <Button className="w-full" onClick={() => {
                   if (!trxForm.treasuryAccountId || !trxForm.amount || !trxForm.date) { toast({ title: "خطأ", description: "املأ الحقول المطلوبة", variant: "destructive" }); return; }
-                  createTrx.mutate({ ...trxForm, treasuryAccountId: Number(trxForm.treasuryAccountId), amount: trxForm.amount, date: trxForm.date, partyName: trxForm.partyName || undefined, description: trxForm.description || undefined, documentNumber: trxForm.documentNumber || undefined });
+                  createTrx.mutate({ ...trxForm, type: trxForm.type as any, treasuryAccountId: Number(trxForm.treasuryAccountId), amount: trxForm.amount, date: trxForm.date, partyName: trxForm.partyName || undefined, description: trxForm.description || undefined, documentNumber: trxForm.documentNumber || undefined });
                 }} disabled={createTrx.isPending}>{createTrx.isPending ? "جاري..." : "حفظ"}</Button>
               </div>
             </DialogContent>

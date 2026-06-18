@@ -5,7 +5,6 @@
  * Types are defined in this file. 54 pages import from here.
  */
 
-import { useState, useCallback } from "react";
 
 export {
   useDepartments, useEmployees, useAttendance, useLeaves,
@@ -215,6 +214,8 @@ export type CuttingOrder = {
   goodPieces: number;
   cutterId?: number;
   cutterName?: string;
+  color?: string;
+  size?: string;
   date: string;
   status: "pending" | "in_progress" | "completed";
   stages: CuttingStage[];
@@ -244,8 +245,8 @@ export type CostRecord = {
   pressingLabor: string;
   packagingLabor: string;
   overheadCost: string;
-  totalCost: string;
-  costPerPiece: string;
+  totalCost?: string;
+  costPerPiece?: string;
   targetQuantity: number;
   notes?: string;
 };
@@ -267,8 +268,8 @@ export type BOMRecord = {
   modelName: string;
   modelCode: string;
   items: BOMItem[];
-  totalMaterialCost: string;
-  updatedAt: string;
+  totalMaterialCost?: string;
+  updatedAt?: string;
 };
 
 export type Bundle = {
@@ -309,7 +310,7 @@ export type WorkOrder = {
   endDate?: string;
   priority: "urgent" | "high" | "normal" | "low";
   status: "pending" | "in_progress" | "completed" | "on_hold";
-  stages: WorkOrderStage[];
+  stages?: WorkOrderStage[];
   notes?: string;
 };
 
@@ -397,8 +398,8 @@ export type Subcontract = {
   sentDate: string;
   expectedReturn?: string;
   actualReturn?: string;
-  unitPrice: string;
-  total: string;
+  unitPrice?: string;
+  total?: string;
   status: "pending" | "sent" | "in_progress" | "returned" | "billed";
   notes?: string;
 };
@@ -412,9 +413,9 @@ export type SalesOrder = {
   date: string;
   deliveryDate?: string;
   items: SalesOrderItem[];
-  totalAmount: string;
-  advance: string;
-  balance: string;
+  totalAmount?: string;
+  advance?: string;
+  balance?: string;
   status: "pending" | "confirmed" | "in_production" | "ready" | "dispatched" | "delivered" | "cancelled";
   notes?: string;
 };
@@ -438,8 +439,8 @@ export type CRMCustomer = {
   address?: string;
   category: string;
   status: string;
-  totalOrders: number;
-  totalRevenue: string;
+  totalOrders?: number;
+  totalRevenue?: string;
   lastContact?: string;
   notes?: string;
 };
@@ -552,6 +553,7 @@ export type ProductionModel = {
   name: string;
   description?: string;
   customerName?: string;
+  category?: string;
   stages: ProductionStage[];
   status: string;
 };
@@ -569,4 +571,5 @@ export type PieceRateRecord = {
   quantity: number;
   unitPrice: string;
   total: string;
+  notes?: string;
 };

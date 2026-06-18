@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Send, Trophy, Trash2, FileText, Gavel } from "lucide-react";
-import { useRFQs, useRFQStats, useCreateRFQ, useUpdateRFQStatus, useAddRFQResponse, useAwardRFQResponse } from "@/hooks/useLocalData";
+import { Plus, Send, Trash2, Gavel } from "lucide-react";
+import { useRFQs, useRFQStats, useCreateRFQ, useUpdateRFQStatus, useAddRFQResponse } from "@/hooks/useLocalData";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500/15 text-gray-400",
@@ -28,7 +28,6 @@ export default function RFQ() {
   const { data: stats } = useRFQStats();
   const createMutation = useCreateRFQ();
   const addResponseMutation = useAddRFQResponse();
-  const awardMutation = useAwardRFQResponse();
   const updateStatusMutation = useUpdateRFQStatus();
 
   const [search, setSearch] = useState("");

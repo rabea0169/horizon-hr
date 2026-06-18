@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, CheckCircle, XCircle, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { usePurchaseRequests, usePurchaseRequestStats, useCreatePurchaseRequest, useUpdatePurchaseRequest, useApprovePurchaseRequest, useRejectPurchaseRequest, useDeletePurchaseRequest } from "@/hooks/useLocalData";
 
 const statusColors: Record<string, string> = {
@@ -36,7 +36,7 @@ export default function PurchaseRequests() {
   const [dialog, setDialog] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ prNumber: "", department: "", requestedBy: "", priority: "normal" as string, requiredDate: "", notes: "" });
-  const [items, setItems] = useState([{ itemId: 1, quantity: "1", notes: "" }]);
+  const [items] = useState([{ itemId: 1, quantity: "1", notes: "" }]);
 
   const filtered = (requests || []).filter((r: any) => {
     const matchSearch = !search || r.prNumber?.includes(search) || r.department?.includes(search);

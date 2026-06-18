@@ -73,7 +73,7 @@ export default function WorkOrders() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="space-y-1">
-                  {o.stages.map((stage) => (
+                  {(o.stages ?? []).map((stage) => (
                     <div key={stage.id} className="flex items-center gap-2 p-1.5 rounded" style={{ background: stage.completed ? "rgba(16,185,129,0.1)" : "var(--bg-primary)" }}>
                       <Checkbox checked={stage.completed} onCheckedChange={() => toggleStage(o.id, stage.id)} className="data-[state=checked]:bg-emerald-500" />
                       <span className={`text-xs flex-1 ${stage.completed ? "line-through" : ""}`} style={{ color: stage.completed ? "var(--text-muted)" : "var(--text-primary)" }}>{stage.name}</span>

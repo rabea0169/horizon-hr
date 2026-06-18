@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Truck, PackageCheck, PackageX, MapPin, Phone } from "lucide-react";
+import { Plus, Truck, PackageCheck, PackageX } from "lucide-react";
 import { useShipments, useShippingStats, useCreateShipment, useUpdateShipmentStatus } from "@/hooks/useLocalData";
 
 const statusColors: Record<string, string> = {

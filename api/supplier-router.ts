@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { suppliers, supplyOrders } from "@db/schema";
+import type { InsertSupplyOrder } from "@db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 
 export const supplierRouter = createRouter({

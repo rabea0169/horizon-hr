@@ -2,7 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { employees, attendance, productionOrders, dailyProduction, bundleTracking, bundles, machines, activities, users, productionLines, payrollRecords, advances, pieceRateRecords, systemSettings, inventoryItems, InsertAttendance, InsertBundle, InsertBundleTracking, InsertActivity } from "@db/schema";
+import { employees, attendance, productionOrders, dailyProduction, bundleTracking, bundles, machines, activities, users, productionLines, payrollRecords, advances, pieceRateRecords, systemSettings, inventoryItems } from "@db/schema";
+import type { InsertBundleTracking, InsertActivity } from "@db/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 
 // ─── Mobile App API ───

@@ -9,7 +9,6 @@ import {
   auditLog, employees, attendance, productionOrders, dailyProduction,
   machines, inventoryItems, salesOrders, crmCustomers,
   leaves, advances, pieceRateRecords, payrollRecords, qcRecords,
-  InsertAttendance, InsertAdvance, InsertProductLifecycle,
 } from "@db/schema";
 import { eq, and, desc, sql, gte, inArray } from "drizzle-orm";
 
@@ -520,12 +519,6 @@ export const employeePortalRouter = createRouter({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired session" });
       }
       const db = getDb();
-      const data = {
-        ...input,
-        startDate: new Date(input.startDate),
-        endDate: new Date(input.endDate),
-        status: "pending" as const,
-      };
       const { token: _, employeeId, leaveType, startDate, endDate, days, reason } = input;
       const [result] = await db.insert(leaves).values({
         employeeId, leaveType, startDate: new Date(startDate), endDate: new Date(endDate), days, status: "pending", reason,
@@ -687,9 +680,7 @@ export const auditRouter = createRouter({
       oldValues: z.string().optional(), newValues: z.string().optional(),
       changedBy: z.number().optional(), changedByName: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
-      const db = getDb();
-      
+    .mutation(async () => {
       return { success: true };
     }),
 

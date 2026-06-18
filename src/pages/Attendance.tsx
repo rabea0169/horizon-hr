@@ -67,7 +67,7 @@ export default function Attendance() {
     manualCheckOut: "",
   });
 
-  const { data: attendanceRecords, save } = useAttendance();
+  const { data: attendanceRecords, create: createAttendance, update: updateAttendance } = useAttendance();
   const { data: employees } = useEmployees();
   const pageSize = 20;
 
@@ -84,7 +84,6 @@ export default function Attendance() {
     const activeEmps = employees.filter((e) => e.status === "active");
     const existingIds = new Set(filtered.map((a) => a.employeeId));
     const newRecords = activeEmps.filter((e) => !existingIds.has(e.id)).map((e) => ({
-      id: Date.now() + e.id,
       employeeId: e.id,
       employeeName: e.fullName,
       employeeCode: e.employeeCode,
@@ -94,15 +93,14 @@ export default function Attendance() {
       checkOut: status === "present" ? "16:00" : undefined,
       hoursWorked: status === "present" ? "8" : undefined,
     }));
-    if (newRecords.length > 0) save([...attendanceRecords, ...newRecords]);
+    newRecords.forEach((rec) => createAttendance(rec));
   };
 
   const handleCheckIn = () => {
     const emp = employees.find((e) => e.id === Number(checkInData.employeeId));
     if (!emp) return;
 
-    const record: Record<string, unknown> = {
-      id: Date.now(),
+    const record: any = {
       employeeId: emp.id,
       employeeName: emp.fullName,
       employeeCode: emp.employeeCode,
@@ -119,7 +117,7 @@ export default function Attendance() {
         record.checkOut = checkInData.manualCheckOut;
         // Calculate hours
         const mins = calcDuration(checkInData.manualCheckIn, checkInData.manualCheckOut);
-        const perms = record.permissions as AttendancePermission[] || [];
+        const perms = record.permissions || [];
         const permMins = perms.reduce((acc: number, p: AttendancePermission) => acc + p.duration, 0);
         const netMins = Math.max(0, mins - permMins);
         record.hoursWorked = (netMins / 60).toFixed(1);
@@ -128,21 +126,25 @@ export default function Attendance() {
       record.checkIn = "08:00";
     }
 
-    save([...attendanceRecords.filter((a) => !(a.employeeId === emp.id && a.date === selectedDate)), record as AttendanceRecord]);
+    const existing = filtered.find((a) => a.employeeId === emp.id);
+    if (existing) {
+      updateAttendance(existing.id, record);
+    } else {
+      createAttendance(record);
+    }
     setCheckInDialog(false);
     setCheckInData({ employeeId: "", status: "present", manualCheckIn: "", manualCheckOut: "", isManual: false });
   };
 
   const handleCheckOut = (id: number) => {
-    save(attendanceRecords.map((a) => {
-      if (a.id !== id) return a;
-      const checkOut = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      const checkIn = a.manualCheckIn || a.checkIn || "08:00";
-      const mins = calcDuration(checkIn, checkOut);
-      const permMins = (a.permissions || []).reduce((acc, p) => acc + p.duration, 0);
-      const netMins = Math.max(0, mins - permMins);
-      return { ...a, checkOut, manualCheckOut: a.manualEntry ? checkOut : undefined, hoursWorked: (netMins / 60).toFixed(1) };
-    }));
+    const a = attendanceRecords.find((r) => r.id === id);
+    if (!a) return;
+    const checkOut = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const checkIn = a.manualCheckIn || a.checkIn || "08:00";
+    const mins = calcDuration(checkIn, checkOut);
+    const permMins = (a.permissions || []).reduce((acc, p) => acc + p.duration, 0);
+    const netMins = Math.max(0, mins - permMins);
+    updateAttendance(id, { checkOut, manualCheckOut: a.manualEntry ? checkOut : undefined, hoursWorked: (netMins / 60).toFixed(1) });
   };
 
   const openPermissionDialog = (recordId: number) => {
@@ -164,37 +166,35 @@ export default function Attendance() {
       note: permData.note,
     };
 
-    save(attendanceRecords.map((a) => {
-      if (a.id !== permData.recordId) return a;
-      const perms = [...(a.permissions || []), permission];
-      // Recalculate hours if checkout exists
-      let hoursWorked = a.hoursWorked;
-      const checkIn = a.manualCheckIn || a.checkIn;
-      const checkOut = a.manualCheckOut || a.checkOut;
-      if (checkIn && checkOut) {
-        const totalMins = calcDuration(checkIn, checkOut);
-        const permMins = perms.reduce((acc, p) => acc + p.duration, 0);
-        hoursWorked = (Math.max(0, totalMins - permMins) / 60).toFixed(1);
-      }
-      return { ...a, permissions: perms, hoursWorked };
-    }));
+    const a = attendanceRecords.find((r) => r.id === permData.recordId);
+    if (!a) return;
+    const perms = [...(a.permissions || []), permission];
+    // Recalculate hours if checkout exists
+    let hoursWorked = a.hoursWorked;
+    const checkIn = a.manualCheckIn || a.checkIn;
+    const checkOut = a.manualCheckOut || a.checkOut;
+    if (checkIn && checkOut) {
+      const totalMins = calcDuration(checkIn, checkOut);
+      const permMins = perms.reduce((acc, p) => acc + p.duration, 0);
+      hoursWorked = (Math.max(0, totalMins - permMins) / 60).toFixed(1);
+    }
+    updateAttendance(permData.recordId, { permissions: perms, hoursWorked });
     setPermDialog(false);
   };
 
   const removePermission = (recordId: number, permId: number) => {
-    save(attendanceRecords.map((a) => {
-      if (a.id !== recordId) return a;
-      const perms = (a.permissions || []).filter((p) => p.id !== permId);
-      let hoursWorked = a.hoursWorked;
-      const checkIn = a.manualCheckIn || a.checkIn;
-      const checkOut = a.manualCheckOut || a.checkOut;
-      if (checkIn && checkOut) {
-        const totalMins = calcDuration(checkIn, checkOut);
-        const permMins = perms.reduce((acc, p) => acc + p.duration, 0);
-        hoursWorked = (Math.max(0, totalMins - permMins) / 60).toFixed(1);
-      }
-      return { ...a, permissions: perms, hoursWorked };
-    }));
+    const a = attendanceRecords.find((r) => r.id === recordId);
+    if (!a) return;
+    const perms = (a.permissions || []).filter((p) => p.id !== permId);
+    let hoursWorked = a.hoursWorked;
+    const checkIn = a.manualCheckIn || a.checkIn;
+    const checkOut = a.manualCheckOut || a.checkOut;
+    if (checkIn && checkOut) {
+      const totalMins = calcDuration(checkIn, checkOut);
+      const permMins = perms.reduce((acc, p) => acc + p.duration, 0);
+      hoursWorked = (Math.max(0, totalMins - permMins) / 60).toFixed(1);
+    }
+    updateAttendance(recordId, { permissions: perms, hoursWorked });
   };
 
   const openEditDialog = (record: AttendanceRecord) => {
@@ -207,27 +207,26 @@ export default function Attendance() {
   };
 
   const handleSaveEdit = () => {
-    save(attendanceRecords.map((a) => {
-      if (a.id !== editData.recordId) return a;
-      const updated: Record<string, unknown> = { ...a, manualEntry: true };
-      if (editData.manualCheckIn) {
-        updated.manualCheckIn = editData.manualCheckIn;
-        updated.checkIn = editData.manualCheckIn;
-      }
-      if (editData.manualCheckOut) {
-        updated.manualCheckOut = editData.manualCheckOut;
-        updated.checkOut = editData.manualCheckOut;
-      }
-      // Recalculate hours
-      const cin = (updated.manualCheckIn || updated.checkIn) as string;
-      const cout = (updated.manualCheckOut || updated.checkOut) as string;
-      if (cin && cout) {
-        const totalMins = calcDuration(cin, cout);
-        const permMins = ((updated.permissions as AttendancePermission[]) || []).reduce((acc: number, p: AttendancePermission) => acc + p.duration, 0);
-        updated.hoursWorked = (Math.max(0, totalMins - permMins) / 60).toFixed(1);
-      }
-      return updated as AttendanceRecord;
-    }));
+    const a = attendanceRecords.find((r) => r.id === editData.recordId);
+    if (!a) return;
+    const updated: Partial<AttendanceRecord> = { manualEntry: true };
+    if (editData.manualCheckIn) {
+      updated.manualCheckIn = editData.manualCheckIn;
+      updated.checkIn = editData.manualCheckIn;
+    }
+    if (editData.manualCheckOut) {
+      updated.manualCheckOut = editData.manualCheckOut;
+      updated.checkOut = editData.manualCheckOut;
+    }
+    // Recalculate hours
+    const cin = (updated.manualCheckIn || a.manualCheckIn || updated.checkIn || a.checkIn) as string;
+    const cout = (updated.manualCheckOut || a.manualCheckOut || updated.checkOut || a.checkOut) as string;
+    if (cin && cout) {
+      const totalMins = calcDuration(cin, cout);
+      const permMins = (a.permissions || []).reduce((acc, p) => acc + p.duration, 0);
+      updated.hoursWorked = (Math.max(0, totalMins - permMins) / 60).toFixed(1);
+    }
+    updateAttendance(editData.recordId, updated);
     setEditDialog(false);
   };
 

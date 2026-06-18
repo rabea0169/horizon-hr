@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/useToast";
 import {
   Scissors, AlertTriangle, TrendingDown, CheckCircle,
-  Plus, Search, Filter, Factory, Gauge, BarChart3,
+  Plus, Search, Gauge, BarChart3,
 } from "lucide-react";
 
 const sourceLabels: Record<string, string> = {

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { salesOpportunities, salesPipelineStages, salesOrders, integrationLogs, InsertSalesOpportunity, InsertSalesOrder } from "@db/schema";
+import { salesOpportunities, salesPipelineStages, salesOrders, integrationLogs } from "@db/schema";
+import type { InsertSalesOpportunity, InsertSalesOrder } from "@db/schema";
 import { eq, count, desc, sql, sum } from "drizzle-orm";
 
 export const salesPipelineRouter = createRouter({
@@ -61,8 +62,8 @@ export const salesPipelineRouter = createRouter({
       const db = getDb();
       const [result] = await db.insert(salesOpportunities).values({
         ...input,
-        expectedValue: parseFloat(input.expectedValue),
-        probability: input.probability ? parseFloat(input.probability) : 0,
+        expectedValue: input.expectedValue,
+        probability: input.probability ?? "0",
         expectedCloseDate: input.expectedCloseDate ? new Date(input.expectedCloseDate) : null,
       } as InsertSalesOpportunity).$returningId();
       return db.query.salesOpportunities.findFirst({ where: eq(salesOpportunities.id, result.id), with: { customer: true, stage: true } });
@@ -87,9 +88,9 @@ export const salesPipelineRouter = createRouter({
       const { id, autoCreateOrder, ...data } = input;
       const db = getDb();
       const updateData: any = { ...data };
-      if (data.expectedValue) updateData.expectedValue = parseFloat(data.expectedValue);
-      if (data.actualValue) updateData.actualValue = parseFloat(data.actualValue);
-      if (data.probability) updateData.probability = parseFloat(data.probability);
+      if (data.expectedValue) updateData.expectedValue = data.expectedValue;
+      if (data.actualValue) updateData.actualValue = data.actualValue;
+      if (data.probability) updateData.probability = data.probability;
       if (data.expectedCloseDate) updateData.expectedCloseDate = new Date(data.expectedCloseDate);
       if (data.status === "won" || data.status === "lost") updateData.actualCloseDate = new Date();
       await db.update(salesOpportunities).set(updateData).where(eq(salesOpportunities.id, id));
@@ -136,7 +137,7 @@ export const salesPipelineRouter = createRouter({
     .mutation(async ({ input }) => {
       const db = getDb();
       const updateData: any = { stageId: input.stageId };
-      if (input.probability) updateData.probability = parseFloat(input.probability);
+      if (input.probability) updateData.probability = input.probability;
       await db.update(salesOpportunities).set(updateData).where(eq(salesOpportunities.id, input.id));
       return db.query.salesOpportunities.findFirst({ where: eq(salesOpportunities.id, input.id), with: { customer: true, stage: true } });
     }),

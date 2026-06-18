@@ -31,7 +31,10 @@ export default function QualityControl() {
     const model = models.find((m) => String(m.id) === form.modelId);
     const bundle = bundles.find((b) => String(b.id) === form.bundleId);
     const qcDefects = defects.filter((d) => d.type.trim()).map((d, i) => ({ id: Date.now() + i, type: d.type, description: d.description, severity: d.severity as QCRecord["defects"][0]["severity"], count: Number(d.count) || 0 }));
-    const data = { inspectionCode: form.inspectionCode, stage: form.stage, modelId: model?.id, modelName: model?.name, bundleId: bundle?.id, bundleCode: bundle?.bundleCode, inspectedBy: form.inspectedBy, date: form.date, checkedQty: Number(form.checkedQty) || 0, passedQty: Number(form.passedQty) || 0, failedQty: Number(form.failedQty) || 0, status: form.status, notes: form.notes, defects: qcDefects };
+    const checkedQty = Number(form.checkedQty) || 0;
+    const failedQty = Number(form.failedQty) || 0;
+    const defectRate = checkedQty > 0 ? ((failedQty / checkedQty) * 100).toFixed(1) : "0.0";
+    const data = { inspectionCode: form.inspectionCode, stage: form.stage, modelId: model?.id, modelName: model?.name, bundleId: bundle?.id, bundleCode: bundle?.bundleCode, inspectedBy: form.inspectedBy, date: form.date, checkedQty, passedQty: Number(form.passedQty) || 0, failedQty, defectRate, status: form.status, notes: form.notes, defects: qcDefects };
     if (editing) update(editing.id, data);
     else create(data);
     setDialog(false); reset();

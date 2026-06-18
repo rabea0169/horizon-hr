@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { inventoryItems, inventoryTransactions, InsertInventoryItem } from "@db/schema";
+import { inventoryItems, inventoryTransactions } from "@db/schema";
+import type { InsertInventoryItem } from "@db/schema";
 import { eq, count, desc, sql } from "drizzle-orm";
 
 export const inventoryRouter = createRouter({
@@ -40,7 +41,7 @@ export const inventoryRouter = createRouter({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const data = { ...input, unitCost: input.unitCost ? parseFloat(input.unitCost) : null };
+      const data = { ...input, unitCost: input.unitCost ?? null };
       const [result] = await db.insert(inventoryItems).values(data as InsertInventoryItem).$returningId();
       return db.query.inventoryItems.findFirst({ where: eq(inventoryItems.id, result.id) });
     }),
@@ -59,7 +60,7 @@ export const inventoryRouter = createRouter({
       const { id, unitCost, ...data } = input;
       const db = getDb();
       const updateData: Record<string, unknown> = { ...data };
-      if (unitCost !== undefined) updateData.unitCost = parseFloat(unitCost);
+      if (unitCost !== undefined) updateData.unitCost = unitCost;
       await db.update(inventoryItems).set(updateData).where(eq(inventoryItems.id, id));
       return db.query.inventoryItems.findFirst({ where: eq(inventoryItems.id, id) });
     }),

@@ -9,16 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, TrendingUp, DollarSign, Target, Award, ArrowRight, X } from "lucide-react";
 import { useOpportunities, usePipelineStages, usePipelineDashboard, useCreateOpportunity, useUpdateOpportunity, useMoveOpportunityStage } from "@/hooks/useLocalData";
 
-const statusColors: Record<string, string> = {
-  open: "bg-blue-500/15 text-blue-400",
-  won: "bg-emerald-500/15 text-emerald-400",
-  lost: "bg-red-500/15 text-red-400",
-  on_hold: "bg-amber-500/15 text-amber-400",
-};
-const statusLabels: Record<string, string> = { open: "مفتوحة", won: "مربوحة", lost: "خاسرة", on_hold: "معلقة" };
-
 export default function SalesPipeline() {
-  const { data: opportunities, isLoading } = useOpportunities();
+  const { data: opportunities } = useOpportunities();
   const { data: dashboard } = usePipelineDashboard();
   const { data: stages } = usePipelineStages();
   const createMutation = useCreateOpportunity();

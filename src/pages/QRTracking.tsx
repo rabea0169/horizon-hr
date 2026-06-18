@@ -31,7 +31,19 @@ export default function QRTracking() {
     const model = models.find((m) => String(m.id) === form.modelId);
     if (!model) return;
     const id = Date.now();
-    create({ modelId: model.id, modelName: model.name, size: form.size, color: form.color, quantity: Number(form.quantity) || 0, bundleCode: `B-${String(id).slice(-6)}` });
+    const code = `B-${String(id).slice(-6)}`;
+    create({
+      modelId: model.id,
+      modelName: model.name,
+      size: form.size,
+      color: form.color,
+      quantity: Number(form.quantity) || 0,
+      bundleCode: code,
+      qrData: code,
+      stages: [],
+      status: "in_progress",
+      createdAt: new Date().toISOString(),
+    });
     setDialog(false);
     setForm({ modelId: "", size: "", color: "", quantity: "" });
   };
@@ -41,7 +53,7 @@ export default function QRTracking() {
     if (!bundle) { alert("Bundle not found!"); return; }
     const nextStage = bundle.stages.find((s) => !s.completed);
     if (nextStage) {
-      scanStage(bundle.id, nextStage.id, "Operator");
+      scanStage(bundle.id, nextStage.name, { notes: "Operator" });
       alert(`Stage "${nextStage.name}" scanned successfully!`);
     } else {
       alert("All stages completed!");

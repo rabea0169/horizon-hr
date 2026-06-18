@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { trpc } from "@/providers/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
-import JsBarcode from "jsbarcode";
 import {
   Printer, Search, Package, QrCode, BarcodeIcon, Download,
-  Plus, X, RefreshCw, Check, Tag
+  Plus, X, RefreshCw, Tag
 } from "lucide-react";
 
 /** Individual barcode sticker data */
@@ -168,10 +167,6 @@ export default function BarcodeGenerator() {
   const { data: bundlesList, isLoading: bundlesLoading } = trpc.bundle.list.useQuery();
   const { data: ordersList } = trpc.productionOrder.list.useQuery();
   const { data: linesList } = trpc.productionLine.list.useQuery();
-  const createBundle = trpc.bundle.create.useMutation({
-    onSuccess: () => utils.bundle.list.invalidate(),
-  });
-  const utils = trpc.useUtils();
 
   // ── Search & filter ──
   const [search, setSearch] = useState("");

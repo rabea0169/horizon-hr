@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Shield, Users, Database, Settings, Bell, Lock, Activity,
-  Server, Key, Monitor, FileText, AlertCircle, CheckCircle, Code
+  Shield, Users, Database, Settings, Activity,
+  AlertCircle
 } from "lucide-react";
 
 interface AdminSection {
@@ -258,7 +258,6 @@ const adminSections: AdminSection[] = [
 
 export default function AdminGuide() {
   const [activeTab, setActiveTab] = useState("users");
-  const section = adminSections.find((s) => s.id === activeTab);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto" dir="rtl">
