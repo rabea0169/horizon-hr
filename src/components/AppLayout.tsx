@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { useRoles, getRoleLabel, getRoleColor } from "@/hooks/useRoles";
+import { trpc } from "@/providers/trpc";
 import {
   useSidebarConfig, CATEGORY_NAMES, CATEGORY_COLORS,
 } from "@/hooks/useSidebarConfig";
@@ -73,6 +74,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { logout, getSessionUser } = useRoles();
   const user = getSessionUser();
   const role = (user?.role || "admin") as import("@/hooks/useRoles").UserRole;
+
+  const { data: notificationsData } = trpc.notifications.myNotifications.useQuery(undefined, {
+    refetchInterval: 15000,
+  });
+
+  const { data: alertsData } = trpc.notifications.checkAlerts.useQuery(undefined, {
+    enabled: role === "admin",
+    refetchInterval: 30000,
+  });
+
+  const alertsCount = alertsData?.alerts?.length || 0;
+  const unreadCount = (notificationsData?.length || 0) + alertsCount;
 
   // Sidebar config hook
   const moduleGroups = getModulesByCategory();
@@ -419,10 +432,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <h1 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>{currentLabel}</h1>
             </div>
             <div className="flex items-center gap-4">
-              <button className="relative transition-colors" style={{ color: "var(--text-muted)" }}>
+              <Link to="/notifications" className="relative transition-colors" style={{ color: "var(--text-muted)" }}>
                 <Bell size={18} />
-                <span className="absolute -top-0.5 -left-0.5 w-2 h-2 rounded-full" style={{ background: "var(--accent-color, #E85D4A)" }} />
-              </button>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -left-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white bg-red-500 min-w-[16px] h-[16px] flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
               <Avatar className="w-8 h-8">
                 <AvatarFallback style={{ background: "var(--accent-color)", color: "white", fontSize: 10 }}>{initials}</AvatarFallback>
               </Avatar>

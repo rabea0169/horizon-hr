@@ -7,13 +7,17 @@ import { eq, count, desc, sql } from "drizzle-orm";
 
 export const purchaseRequestRouter = createRouter({
   list: authedQuery
-    .input(z.object({ status: z.string().optional(), department: z.string().optional(), priority: z.string().optional() }).optional())
+    .input(z.object({
+      status: z.enum(["draft", "pending_approval", "approved", "rejected", "converted_to_po"]).optional(),
+      department: z.string().optional(),
+      priority: z.enum(["low", "normal", "high", "urgent"]).optional()
+    }).optional())
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
-      if (input?.status) conditions.push(eq(purchaseRequests.status, input.status as any));
+      if (input?.status) conditions.push(eq(purchaseRequests.status, input.status));
       if (input?.department) conditions.push(eq(purchaseRequests.department, input.department));
-      if (input?.priority) conditions.push(eq(purchaseRequests.priority, input.priority as "low" | "normal" | "high" | "urgent"));
+      if (input?.priority) conditions.push(eq(purchaseRequests.priority, input.priority));
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.purchaseRequests.findMany({ where, orderBy: desc(purchaseRequests.createdAt) });
     }),

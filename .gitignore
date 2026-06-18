@@ -26,16 +26,23 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+
 # Database
 *.db
 *.sqlite
 *.sqlite3
 db/migrations/*.sql
+
 # TypeScript cache
 *.tsbuildinfo
+
 # Build outputs
 dist/
 build/
+release/
+
 # Test coverage
 coverage/
 .nyc_output/

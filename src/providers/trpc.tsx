@@ -25,9 +25,18 @@ const queryClient = new QueryClient({
   }),
 });
 const getApiUrl = () => {
+  const storedUrl = typeof window !== "undefined" ? localStorage.getItem("hr_server_url") : null;
+  if (storedUrl) {
+    const cleanUrl = storedUrl.endsWith("/") ? storedUrl.slice(0, -1) : storedUrl;
+    return `${cleanUrl}/api/trpc`;
+  }
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     return envUrl;
+  }
+  // If running from file:// (Electron or portable distribution without storage config)
+  if (typeof window !== "undefined" && window.location.protocol === "file:") {
+    return "http://localhost:3000/api/trpc";
   }
   return "/api/trpc";
 };

@@ -1,25 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, AlertTriangle, Package, Clock, Wrench, UserX, ShieldAlert, CheckCircle, Trash2 } from "lucide-react";
-
-const STORAGE_KEY = "hr_notifications";
-
-const DEFAULT_NOTIFICATIONS = [
-  { id: 1, type: "late_so", title: "أمر بيع متأخر", message: "SO-0001 — ABC Trading — كان يجب التسليم 2026-06-10", severity: "critical", read: false, createdAt: "2026-06-12 08:00", module: "sales" },
-  { id: 2, type: "low_stock", title: "مخزون منخفض", message: "Cotton Poplin 240gsm — الرصيد: 120 رول — الحد الأدنى: 200", severity: "warning", read: false, createdAt: "2026-06-12 07:30", module: "inventory" },
-  { id: 3, type: "maintenance_due", title: "صيانة وقائية مستحقة", message: "ماكينة Overlock #3 — صيانة شهرية مستحقة اليوم", severity: "warning", read: false, createdAt: "2026-06-12 07:00", module: "maintenance" },
-  { id: 4, type: "absence", title: "غياب متكرر", message: "أحمد محمود (EMP-008) — 4 أيام غياب متتالية", severity: "info", read: true, createdAt: "2026-06-11 16:00", module: "hr" },
-  { id: 5, type: "aql_fail", title: "فحص AQL فاشل", message: "Final Inspection — SO-0003 — عيوب: 8 — حد القبول: 5", severity: "critical", read: false, createdAt: "2026-06-11 14:00", module: "quality" },
-  { id: 6, type: "pending_po", title: "أمر شراء معلق", message: "PO-0001 — Al-Amal Textile — لم يتم الاستلام بعد (5 أيام)", severity: "warning", read: true, createdAt: "2026-06-11 10:00", module: "inventory" },
-  { id: 7, type: "overtime", title: "تجاوز ساعات إضافية", message: "3 عمال تجاوزوا 40 ساعة إضافية هذا الشهر", severity: "info", read: true, createdAt: "2026-06-10 18:00", module: "payroll" },
-];
-
-function load(): any[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
-}
-function save(d: any[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+import { Bell, AlertTriangle, Package, Clock, Wrench, UserX, ShieldAlert, RefreshCw } from "lucide-react";
+import { trpc } from "@/providers/trpc";
+import { useRoles } from "@/hooks/useRoles";
 
 const severityConfig: Record<string, { color: string; bg: string; icon: any }> = {
   critical: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/30", icon: AlertTriangle },
@@ -30,45 +15,90 @@ const severityConfig: Record<string, { color: string; bg: string; icon: any }> =
 const typeIcons: Record<string, any> = {
   late_so: Package,
   low_stock: Package,
-  maintenance_due: Wrench,
+  machine_down: Wrench,
   absence: UserX,
   aql_fail: ShieldAlert,
   pending_po: Package,
   overtime: Clock,
+  pending_advance: Clock,
+  info: Bell,
 };
 
 export default function Notifications() {
-  const [data, setData] = useState<any[]>(load().length > 0 ? load() : DEFAULT_NOTIFICATIONS);
+  const { getSessionUser } = useRoles();
+  const user = getSessionUser();
+  const isAdmin = user?.role === "admin";
+
+  const { data: dbNotifications, isLoading: loadingNotifs, refetch: refetchNotifs } = trpc.notifications.myNotifications.useQuery();
+  const { data: alertsData, isLoading: loadingAlerts, refetch: refetchAlerts } = trpc.notifications.checkAlerts.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+
   const [filter, setFilter] = useState("all");
 
-  const persist = (d: any[]) => { setData(d); save(d); };
+  const allNotifications = useMemo(() => {
+    const alerts = alertsData?.alerts.map((al, idx) => ({
+      id: `alert-${idx}`,
+      type: al.type,
+      title: al.type === "low_stock" ? "مخزون منخفض" : al.type === "machine_down" ? "عطل ماكينة" : "طلب سلفة معلق",
+      message: al.message,
+      severity: al.severity === "error" ? "critical" : al.severity,
+      read: false,
+      createdAt: "الآن",
+      module: al.type === "low_stock" ? "inventory" : al.type === "machine_down" ? "maintenance" : "payroll",
+    })) || [];
 
-  const markRead = (id: number) => persist(data.map(n => n.id === id ? { ...n, read: true } : n));
-  const markAllRead = () => persist(data.map(n => ({ ...n, read: true })));
-  const remove = (id: number) => persist(data.filter(n => n.id !== id));
-  const clearAll = () => { if (confirm("حذف كل الإشعارات؟")) persist([]); };
+    const dbNotifs = dbNotifications?.map((act) => {
+      const desc = act.description || "";
+      return {
+        id: act.id,
+        type: "info",
+        title: desc.split(":")[0] || "تنبيه النظام",
+        message: desc.split(":").slice(1).join(":") || desc,
+        severity: "info",
+        read: false,
+        createdAt: new Date(act.createdAt).toLocaleString("ar-EG"),
+        module: "system",
+      };
+    }) || [];
 
-  const filtered = filter === "all" ? data : filter === "unread" ? data.filter(n => !n.read) : data.filter(n => n.severity === filter);
-  const unreadCount = data.filter(n => !n.read).length;
+    return [...alerts, ...dbNotifs];
+  }, [dbNotifications, alertsData]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return allNotifications;
+    if (filter === "unread") return allNotifications.filter((n) => !n.read);
+    return allNotifications.filter((n) => n.severity === filter);
+  }, [allNotifications, filter]);
+
+  const unreadCount = allNotifications.filter(n => !n.read).length;
+
+  const refreshAll = () => {
+    refetchNotifs();
+    if (isAdmin) refetchAlerts();
+  };
+
+  const isLoading = loadingNotifs || (isAdmin && loadingAlerts);
 
   return (
     <div className="space-y-4" dir="rtl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell size={20} style={{ color: "var(--accent-color)" }} />
-          <h2 className="text-xl font-bold">التنبيهات والإشعارات</h2>
+          <h2 className="text-xl font-bold">التنبيهات والإشعارات من قاعدة البيانات</h2>
           {unreadCount > 0 && <Badge variant="outline" className="bg-red-500/15 text-red-400">{unreadCount} جديد</Badge>}
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={markAllRead}><CheckCircle size={14} /> تعيين الكل مقروء</Button>
-          <Button size="sm" variant="ghost" className="text-red-400" onClick={clearAll}><Trash2 size={14} /> حذف الكل</Button>
+          <Button size="sm" variant="outline" onClick={refreshAll} disabled={isLoading}>
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} /> تحديث
+          </Button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { key: "all", label: `الكل (${data.length})` },
+          { key: "all", label: `الكل (${allNotifications.length})` },
           { key: "unread", label: `غير مقروء (${unreadCount})` },
           { key: "critical", label: "حرج" },
           { key: "warning", label: "تنبيه" },
@@ -80,7 +110,7 @@ export default function Notifications() {
 
       {/* Notifications list */}
       <div className="space-y-2">
-        {filtered.map(n => {
+        {filtered.map((n) => {
           const cfg = severityConfig[n.severity] || severityConfig.info;
           const Icon = typeIcons[n.type] || Bell;
           return (
@@ -96,10 +126,6 @@ export default function Notifications() {
                   <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{n.message}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{n.createdAt}</span>
-                    <div className="flex gap-1">
-                      {!n.read && <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => markRead(n.id)}>تعيين مقروء</Button>}
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-400" onClick={() => remove(n.id)}><Trash2 size={12} /></Button>
-                    </div>
                   </div>
                 </div>
               </CardContent>

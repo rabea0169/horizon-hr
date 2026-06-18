@@ -67,10 +67,22 @@ export default function QATesting() {
   const runTest = useCallback(async (name: string, query: any): Promise<TestResult> => {
     const start = performance.now();
     try {
-      await query.refetch();
+      const result = await query.refetch();
       const duration = Math.round(performance.now() - start);
-      const rows = Array.isArray(query.data) ? query.data.length : 0;
-      const status = rows > 0 ? "passed" as const : rows === 0 ? "warning" as const : "passed" as const;
+      
+      if (result.isError || result.status === "error") {
+        return {
+          name,
+          endpoint: name,
+          status: "failed" as const,
+          duration,
+          error: result.error?.message || "فشلت عملية الاستدعاء / خطأ في الاتصال"
+        };
+      }
+      
+      const data = result.data;
+      const rows = Array.isArray(data) ? data.length : 0;
+      const status = rows > 0 ? "passed" as const : "warning" as const;
       return { name, endpoint: name, status, duration, rows };
     } catch (err: any) {
       const duration = Math.round(performance.now() - start);

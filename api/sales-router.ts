@@ -7,12 +7,12 @@ import { eq, count, desc, sql } from "drizzle-orm";
 
 export const salesOrderRouter = createRouter({
   list: authedQuery
-    .input(z.object({ customerId: z.number().optional(), status: z.string().optional() }).optional())
+    .input(z.object({ customerId: z.number().optional(), status: z.enum(["pending", "confirmed", "in_production", "ready", "shipped", "delivered", "cancelled"]).optional() }).optional())
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
       if (input?.customerId) conditions.push(eq(salesOrders.customerId, input.customerId));
-      if (input?.status) conditions.push(eq(salesOrders.status, input.status as any));
+      if (input?.status) conditions.push(eq(salesOrders.status, input.status));
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.salesOrders.findMany({ where, with: { customer: true }, orderBy: desc(salesOrders.createdAt) });
     }),
@@ -137,22 +137,22 @@ export const salesOrderRouter = createRouter({
 
 export const crmRouter = createRouter({
   list: authedQuery
-    .input(z.object({ search: z.string().optional(), status: z.string().optional() }).optional())
+    .input(z.object({ search: z.string().optional(), status: z.enum(["active", "inactive", "prospect"]).optional() }).optional())
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
-      if (input?.status) conditions.push(eq(crmCustomers.status, input.status as any));
+      if (input?.status) conditions.push(eq(crmCustomers.status, input.status));
       if (input?.search) conditions.push(sql`${crmCustomers.name} LIKE ${"%" + input.search + "%"}`);
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.crmCustomers.findMany({ where, with: { interactions: true }, orderBy: desc(crmCustomers.createdAt) });
     }),
 
   listCustomers: authedQuery
-    .input(z.object({ search: z.string().optional(), status: z.string().optional() }).optional())
+    .input(z.object({ search: z.string().optional(), status: z.enum(["active", "inactive", "prospect"]).optional() }).optional())
     .query(async ({ input }) => {
       const db = getDb();
       const conditions = [];
-      if (input?.status) conditions.push(eq(crmCustomers.status, input.status as any));
+      if (input?.status) conditions.push(eq(crmCustomers.status, input.status));
       if (input?.search) conditions.push(sql`${crmCustomers.name} LIKE ${"%" + input.search + "%"}`);
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
       return db.query.crmCustomers.findMany({ where, with: { interactions: true }, orderBy: desc(crmCustomers.createdAt) });

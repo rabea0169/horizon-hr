@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { qcRecords, mrpRecords, challans, subcontracts, bundles, bundleTracking, cuttingOrders, workOrders, shifts, activities, employees, bomRecords, inventoryItems } from "@db/schema";
@@ -235,7 +236,12 @@ export const mrpRouter = createRouter({
       const db = getDb();
       
       const mrpRec = await db.query.mrpRecords.findFirst({ where: eq(mrpRecords.id, id), with: { item: true } });
-      if (!mrpRec) throw new Error("MRP record not found");
+      if (!mrpRec) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "سجل تخطيط الاحتياجات غير موجود / MRP record not found",
+        });
+      }
       
       if (mrpRec.item && (materialName || category || unit)) {
         await db.update(inventoryItems).set({
@@ -517,7 +523,12 @@ export const workOrderRouter = createRouter({
     .mutation(async ({ input }) => {
       const db = getDb();
       const wo = await db.query.workOrders.findFirst({ where: eq(workOrders.id, input.workOrderId) });
-      if (!wo) throw new Error("Work order not found");
+      if (!wo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "أمر التشغيل غير موجود / Work order not found",
+        });
+      }
       
       const currentCompleted = wo.completedStages ? wo.completedStages.split(",").filter(Boolean).map(Number) : [];
       const index = currentCompleted.indexOf(input.stageId);
