@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Horizon HR',
   webDir: 'dist/public',
   server: {
-    cleartext: true,
+    cleartext: false,
     allowNavigation: [],
     androidScheme: 'https',
   },

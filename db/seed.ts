@@ -1,4 +1,5 @@
 import { getDb } from "../api/queries/connection";
+import bcrypt from "bcryptjs";
 import {
   users, departments, employees, attendance, leaves, performanceReviews,
   jobPostings, candidates, payrollRecords, shifts, shiftAssignments,
@@ -142,6 +143,80 @@ async function seed() {
       empIdx++;
     }
   }
+
+  // ─── 2.1 Default System Users ───
+  console.log("👥 Seeding default system users into employees...");
+  const adminDept = depts.find(d => d.name === "الإدارة")?.id || depts[0].id;
+  const sewingDept = depts.find(d => d.name === "الخياطة")?.id || depts[0].id;
+  const financeDept = depts.find(d => d.name === "المالية")?.id || depts[0].id;
+
+  const systemUsers = [
+    {
+      employeeCode: "admin",
+      fullName: "مدير النظام",
+      email: "admin@horizon.factory",
+      phone: "01001234567",
+      departmentId: adminDept,
+      role: "admin",
+      jobTitle: "مدير عام",
+      joinDate: new Date("2026-01-01"),
+      salary: "20000.00",
+      status: "active" as const,
+      employmentType: "full_time" as const,
+      salaryType: "monthly" as const,
+      passwordHash: bcrypt.hashSync(process.env.HORIZON_ADMIN_PASSWORD || "admin123", 10),
+    },
+    {
+      employeeCode: "supervisor",
+      fullName: "مشرف الإنتاج",
+      email: "supervisor@horizon.factory",
+      phone: "01011234567",
+      departmentId: sewingDept,
+      role: "supervisor",
+      jobTitle: "مشرف خط",
+      joinDate: new Date("2026-01-01"),
+      salary: "10000.00",
+      status: "active" as const,
+      employmentType: "full_time" as const,
+      salaryType: "monthly" as const,
+      passwordHash: bcrypt.hashSync(process.env.HORIZON_SUPERVISOR_PASSWORD || "super123", 10),
+    },
+    {
+      employeeCode: "accountant",
+      fullName: "المحاسب",
+      email: "accountant@horizon.factory",
+      phone: "01021234567",
+      departmentId: financeDept,
+      role: "accountant",
+      jobTitle: "محاسب",
+      joinDate: new Date("2026-01-01"),
+      salary: "12000.00",
+      status: "active" as const,
+      employmentType: "full_time" as const,
+      salaryType: "monthly" as const,
+      passwordHash: bcrypt.hashSync(process.env.HORIZON_ACCOUNTANT_PASSWORD || "acc123", 10),
+    },
+    {
+      employeeCode: "worker",
+      fullName: "عامل عادي",
+      email: "worker@horizon.factory",
+      phone: "01031234567",
+      departmentId: sewingDept,
+      role: "worker",
+      jobTitle: "خياط",
+      joinDate: new Date("2026-01-01"),
+      salary: "5000.00",
+      status: "active" as const,
+      employmentType: "full_time" as const,
+      salaryType: "piece_rate" as const,
+      passwordHash: bcrypt.hashSync(process.env.HORIZON_WORKER_PASSWORD || "work123", 10),
+    },
+  ];
+
+  for (const u of systemUsers) {
+    await db.insert(employees).values(u as any);
+  }
+
   const emps = await db.select().from(employees);
   console.log(`  ✓ ${emps.length} employees`);
 
@@ -1690,7 +1765,9 @@ async function seed() {
   console.log("\n✅ Seed complete! All tables populated with comprehensive mock data.");
 }
 
-seed().catch((err) => {
+seed().then(() => {
+  process.exit(0);
+}).catch((err) => {
   console.error("❌ Seed failed:", err);
   process.exit(1);
 });

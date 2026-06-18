@@ -6,13 +6,9 @@ import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { createToken } from "./horizon-auth";
 import { loginRateLimit } from "./lib/rate-limiter";
 import { env } from "./lib/env";
-
-const HORIZON_USERS = [
-  { id: 1, username: env.adminUsername, passwordHash: bcrypt.hashSync(env.adminPassword, 10), role: "admin" as const, fullName: "مدير النظام" },
-  { id: 2, username: "supervisor", passwordHash: bcrypt.hashSync(env.supervisorPassword, 10), role: "supervisor" as const, fullName: "مشرف الإنتاج" },
-  { id: 3, username: "accountant", passwordHash: bcrypt.hashSync(env.accountantPassword, 10), role: "accountant" as const, fullName: "المحاسب" },
-  { id: 4, username: "worker", passwordHash: bcrypt.hashSync(env.workerPassword, 10), role: "worker" as const, fullName: "عامل عادي" },
-];
+import { getDb } from "./queries/connection";
+import { employees } from "@db/schema";
+import { eq } from "drizzle-orm";
 
 export const authRouter = createRouter({
   me: authedQuery.query((opts) => ({
@@ -36,8 +32,38 @@ export const authRouter = createRouter({
         });
       }
 
-      const user = HORIZON_USERS.find((u) => u.username === input.username);
-      if (!user || !bcrypt.compareSync(input.password, user.passwordHash)) {
+      const db = getDb();
+      let user = null;
+
+      // 1. Check DB first
+      const dbUser = await db.query.employees.findFirst({
+        where: eq(employees.employeeCode, input.username),
+      });
+
+      if (dbUser) {
+        if (dbUser.passwordHash && bcrypt.compareSync(input.password, dbUser.passwordHash)) {
+          user = {
+            id: dbUser.id,
+            username: dbUser.employeeCode,
+            role: dbUser.role,
+            fullName: dbUser.fullName,
+          };
+        }
+      }
+
+      // 2. Fallback to Env if not found in the DB (specifically for administrative bootstrap account)
+      if (!user) {
+        if (input.username === env.adminUsername && input.password === env.adminPassword) {
+          user = {
+            id: 1, // Fallback admin ID
+            username: env.adminUsername,
+            role: "admin",
+            fullName: "مدير النظام",
+          };
+        }
+      }
+
+      if (!user) {
         return { success: false, token: null, user: null };
       }
 
@@ -61,3 +87,4 @@ export const authRouter = createRouter({
     return { success: true };
   }),
 });
+

@@ -248,18 +248,20 @@ export const openingBalanceRouter = createRouter({
     .input(z.object({ id: z.number(), postedBy: z.number() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
-      await db.update(openingBalances)
-        .set({ posted: true, postedAt: new Date(), postedBy: input.postedBy })
-        .where(eq(openingBalances.id, input.id));
+      return await db.transaction(async (tx) => {
+        await tx.update(openingBalances)
+          .set({ posted: true, postedAt: new Date(), postedBy: input.postedBy })
+          .where(eq(openingBalances.id, input.id));
 
-      // Also update account opening balance
-      const ob = await db.select().from(openingBalances).where(eq(openingBalances.id, input.id)).limit(1);
-      if (ob[0]) {
-        await db.update(accounts)
-          .set({ openingBalance: ob[0].balance.toString() })
-          .where(eq(accounts.id, ob[0].accountId));
-      }
-      return { success: true };
+        // Also update account opening balance
+        const ob = await tx.select().from(openingBalances).where(eq(openingBalances.id, input.id)).limit(1);
+        if (ob[0]) {
+          await tx.update(accounts)
+            .set({ openingBalance: ob[0].balance.toString() })
+            .where(eq(accounts.id, ob[0].accountId));
+        }
+        return { success: true };
+      });
     }),
 });
 
