@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, authedQuery, adminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { qcRecords, mrpRecords, challans, subcontracts, bundles, bundleTracking, cuttingOrders, workOrders, shifts, activities, InsertBundle, employees, productionModels } from "@db/schema";
+import { qcRecords, mrpRecords, challans, subcontracts, bundles, bundleTracking, cuttingOrders, workOrders, shifts, activities, InsertBundle, employees, productionModels, bomRecords, inventoryItems } from "@db/schema";
 import { eq, count, desc, sql, and } from "drizzle-orm";
 
 const stageEnum = ["fabric", "cutting", "sewing", "pressing", "packing"] as const;
@@ -168,20 +168,106 @@ export const mrpRouter = createRouter({
     }),
 
   create: adminQuery
-    .input(z.object({ productionOrderId: z.number(), itemId: z.number(), requiredQuantity: z.number(), availableQuantity: z.number().optional() }))
+    .input(z.object({
+      productionOrderId: z.number().optional(),
+      materialName: z.string(),
+      category: z.string().optional(),
+      unit: z.string().optional(),
+      requiredQuantity: z.number(),
+      availableQuantity: z.number().optional(),
+      status: z.enum(["planned", "ordered", "available", "shortage", "sufficient", "low", "critical", "order_needed"]).optional()
+    }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const data = { ...input, availableQuantity: input.availableQuantity ?? 0, shortage: Math.max(0, input.requiredQuantity - (input.availableQuantity ?? 0)) };
-      const [result] = await db.insert(mrpRecords).values(data).$returningId();
+      let item = await db.query.inventoryItems.findFirst({
+        where: eq(inventoryItems.name, input.materialName)
+      });
+      if (!item) {
+        const [newInv] = await db.insert(inventoryItems).values({
+          sku: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: input.materialName,
+          category: input.category || "other",
+          unit: input.unit || "قطعة",
+          quantity: input.availableQuantity || 0,
+          minStock: 10,
+          status: "in_stock"
+        }).$returningId();
+        item = { id: newInv.id } as any;
+      }
+      
+      const prodOrderId = input.productionOrderId || 1;
+      const requiredQty = input.requiredQuantity;
+      const availableQty = input.availableQuantity ?? 0;
+      
+      let status: "planned" | "ordered" | "available" | "shortage" = "planned";
+      if (input.status) {
+        if (input.status === "sufficient" || input.status === "available") status = "available";
+        else if (input.status === "critical" || input.status === "shortage") status = "shortage";
+        else if (input.status === "low" || input.status === "ordered") status = "ordered";
+        else status = "planned";
+      } else {
+        status = availableQty >= requiredQty ? "available" : "shortage";
+      }
+
+      const [result] = await db.insert(mrpRecords).values({
+        productionOrderId: prodOrderId,
+        itemId: item.id,
+        requiredQuantity: requiredQty,
+        availableQuantity: availableQty,
+        shortage: Math.max(0, requiredQty - availableQty),
+        status
+      }).$returningId();
+      
       return db.query.mrpRecords.findFirst({ where: eq(mrpRecords.id, result.id), with: { item: true } });
     }),
 
   update: adminQuery
-    .input(z.object({ id: z.number(), availableQuantity: z.number().optional(), status: z.enum(["planned", "ordered", "available", "shortage"]).optional() }))
+    .input(z.object({
+      id: z.number(),
+      materialName: z.string().optional(),
+      category: z.string().optional(),
+      unit: z.string().optional(),
+      availableQuantity: z.number().optional(),
+      requiredQuantity: z.number().optional(),
+      status: z.enum(["planned", "ordered", "available", "shortage", "sufficient", "low", "critical", "order_needed"]).optional()
+    }))
     .mutation(async ({ input }) => {
-      const { id, ...data } = input;
+      const { id, materialName, category, unit, ...data } = input;
       const db = getDb();
-      await db.update(mrpRecords).set(data).where(eq(mrpRecords.id, id));
+      
+      const mrpRec = await db.query.mrpRecords.findFirst({ where: eq(mrpRecords.id, id), with: { item: true } });
+      if (!mrpRec) throw new Error("MRP record not found");
+      
+      if (mrpRec.item && (materialName || category || unit)) {
+        await db.update(inventoryItems).set({
+          name: materialName || undefined,
+          category: category || undefined,
+          unit: unit || undefined
+        }).where(eq(inventoryItems.id, mrpRec.itemId));
+      }
+      
+      const updateData: Record<string, unknown> = {};
+      if (data.availableQuantity !== undefined) {
+        updateData.availableQuantity = data.availableQuantity;
+        updateData.shortage = Math.max(0, (data.requiredQuantity ?? mrpRec.requiredQuantity) - data.availableQuantity);
+      }
+      if (data.requiredQuantity !== undefined) {
+        updateData.requiredQuantity = data.requiredQuantity;
+        updateData.shortage = Math.max(0, data.requiredQuantity - (data.availableQuantity ?? mrpRec.availableQuantity ?? 0));
+      }
+      if (data.status) {
+        let status: "planned" | "ordered" | "available" | "shortage" = "planned";
+        if (data.status === "sufficient" || data.status === "available") status = "available";
+        else if (data.status === "critical" || data.status === "shortage") status = "shortage";
+        else if (data.status === "low" || data.status === "ordered") status = "ordered";
+        else status = "planned";
+        updateData.status = status;
+      }
+      
+      if (Object.keys(updateData).length > 0) {
+        await db.update(mrpRecords).set(updateData).where(eq(mrpRecords.id, id));
+      }
+      
       return db.query.mrpRecords.findFirst({ where: eq(mrpRecords.id, id), with: { item: true } });
     }),
 
@@ -368,7 +454,45 @@ export const workOrderRouter = createRouter({
       if (input?.productionOrderId) conditions.push(eq(workOrders.productionOrderId, input.productionOrderId));
       if (input?.status) conditions.push(eq(workOrders.status, input.status as "pending" | "in_progress" | "completed" | "cancelled"));
       const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
-      return db.query.workOrders.findMany({ where, with: { model: true, line: true }, orderBy: desc(workOrders.createdAt) });
+      const rows = await db.query.workOrders.findMany({
+        where,
+        with: {
+          model: {
+            with: {
+              stages: true
+            }
+          },
+          line: true
+        },
+        orderBy: desc(workOrders.createdAt)
+      });
+      
+      return rows.map((row) => {
+        const completedStageIds = row.completedStages ? row.completedStages.split(",").filter(Boolean).map(Number) : [];
+        const stages = row.model?.stages?.map((stage) => ({
+          id: stage.id,
+          name: stage.name,
+          completed: completedStageIds.includes(stage.id),
+        })) ?? [];
+        
+        return {
+          id: row.id,
+          orderCode: row.orderNumber,
+          modelId: row.modelId,
+          modelName: row.model?.name ?? "",
+          bomId: undefined,
+          productionOrderId: row.productionOrderId,
+          lineId: row.lineId,
+          lineName: row.line?.name ?? "",
+          quantity: row.quantity,
+          startDate: row.startDate ? new Date(row.startDate).toISOString().split("T")[0] : "",
+          endDate: row.endDate ? new Date(row.endDate).toISOString().split("T")[0] : "",
+          priority: row.priority,
+          status: row.status,
+          stages,
+          notes: "",
+        };
+      });
     }),
 
   create: adminQuery
@@ -387,6 +511,28 @@ export const workOrderRouter = createRouter({
       const db = getDb();
       await db.update(workOrders).set(data).where(eq(workOrders.id, id));
       return db.query.workOrders.findFirst({ where: eq(workOrders.id, id), with: { model: true } });
+    }),
+
+  toggleStage: adminQuery
+    .input(z.object({ workOrderId: z.number(), stageId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const wo = await db.query.workOrders.findFirst({ where: eq(workOrders.id, input.workOrderId) });
+      if (!wo) throw new Error("Work order not found");
+      
+      const currentCompleted = wo.completedStages ? wo.completedStages.split(",").filter(Boolean).map(Number) : [];
+      const index = currentCompleted.indexOf(input.stageId);
+      if (index > -1) {
+        currentCompleted.splice(index, 1);
+      } else {
+        currentCompleted.push(input.stageId);
+      }
+      
+      await db.update(workOrders).set({
+        completedStages: currentCompleted.join(",")
+      }).where(eq(workOrders.id, input.workOrderId));
+      
+      return { success: true };
     }),
 
   delete: adminQuery
@@ -448,6 +594,169 @@ export const auditRouter = createRouter({
       await db.insert(activities).values({ ...input, userId, userName });
       return { success: true };
     }),
+});
+
+export const bomRouter = createRouter({
+  list: authedQuery.query(async () => {
+    const db = getDb();
+    const rows = await db.query.bomRecords.findMany({
+      with: {
+        model: true,
+        item: true
+      }
+    });
+
+    const groups: Record<number, {
+      id: number;
+      modelId: number;
+      modelName: string;
+      modelCode: string;
+      items: any[];
+      totalMaterialCost: number;
+      updatedAt: Date;
+    }> = {};
+
+    for (const row of rows) {
+      if (!row.model) continue;
+      const modelId = row.modelId;
+      if (!groups[modelId]) {
+        groups[modelId] = {
+          id: modelId,
+          modelId: modelId,
+          modelName: row.model.name,
+          modelCode: row.model.modelCode,
+          items: [],
+          totalMaterialCost: 0,
+          updatedAt: row.createdAt ?? new Date()
+        };
+      }
+      
+      const qty = parseFloat(String(row.quantity)) || 0;
+      const price = parseFloat(row.item?.unitCost ?? "0") || 0;
+      const total = qty * price;
+      
+      groups[modelId].items.push({
+        id: row.id,
+        materialName: row.item?.name ?? "Unknown Material",
+        category: row.item?.category ?? "other",
+        quantity: qty,
+        unit: row.unit,
+        unitPrice: String(price),
+        total: String(total),
+        notes: row.notes ?? ""
+      });
+      
+      groups[modelId].totalMaterialCost += total;
+      if (row.createdAt && row.createdAt > groups[modelId].updatedAt) {
+        groups[modelId].updatedAt = row.createdAt;
+      }
+    }
+
+    return Object.values(groups).map(g => ({
+      ...g,
+      totalMaterialCost: String(g.totalMaterialCost),
+      updatedAt: g.updatedAt.toISOString()
+    }));
+  }),
+
+  create: adminQuery
+    .input(z.object({
+      modelId: z.number(),
+      items: z.array(z.object({
+        materialName: z.string(),
+        category: z.string(),
+        quantity: z.number(),
+        unit: z.string(),
+        unitPrice: z.string().optional(),
+        notes: z.string().optional()
+      }))
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(bomRecords).where(eq(bomRecords.modelId, input.modelId));
+      
+      for (const item of input.items) {
+        let invItem = await db.query.inventoryItems.findFirst({
+          where: eq(inventoryItems.name, item.materialName)
+        });
+        
+        if (!invItem) {
+          const [newInv] = await db.insert(inventoryItems).values({
+            sku: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: item.materialName,
+            category: item.category,
+            unit: item.unit,
+            quantity: 100,
+            unitCost: item.unitPrice ?? "0",
+            status: "in_stock"
+          }).$returningId();
+          invItem = { id: newInv.id } as any;
+        }
+        
+        await db.insert(bomRecords).values({
+          modelId: input.modelId,
+          itemId: invItem.id,
+          quantity: String(item.quantity),
+          unit: item.unit,
+          notes: item.notes ?? ""
+        });
+      }
+      return { success: true };
+    }),
+
+  update: adminQuery
+    .input(z.object({
+      id: z.number(),
+      modelId: z.number(),
+      items: z.array(z.object({
+        materialName: z.string(),
+        category: z.string(),
+        quantity: z.number(),
+        unit: z.string(),
+        unitPrice: z.string().optional(),
+        notes: z.string().optional()
+      }))
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const modelId = input.modelId || input.id;
+      await db.delete(bomRecords).where(eq(bomRecords.modelId, modelId));
+      
+      for (const item of input.items) {
+        let invItem = await db.query.inventoryItems.findFirst({
+          where: eq(inventoryItems.name, item.materialName)
+        });
+        
+        if (!invItem) {
+          const [newInv] = await db.insert(inventoryItems).values({
+            sku: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: item.materialName,
+            category: item.category,
+            unit: item.unit,
+            quantity: 100,
+            unitCost: item.unitPrice ?? "0",
+            status: "in_stock"
+          }).$returningId();
+          invItem = { id: newInv.id } as any;
+        }
+        
+        await db.insert(bomRecords).values({
+          modelId,
+          itemId: invItem.id,
+          quantity: String(item.quantity),
+          unit: item.unit,
+          notes: item.notes ?? ""
+        });
+      }
+      return { success: true };
+    }),
+
+  delete: adminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await getDb().delete(bomRecords).where(eq(bomRecords.modelId, input.id));
+      return { success: true };
+    })
 });
 
 

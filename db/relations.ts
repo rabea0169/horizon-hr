@@ -34,26 +34,27 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 // ─── Departments ───
 export const departmentsRelations = relations(departments, ({ many, one }) => ({
-  employees: many(employees),
-  manager: one(employees, { fields: [departments.managerId], references: [employees.id] }),
+  employees: many(employees, { relationName: "employee_department" }),
+  manager: one(employees, { fields: [departments.managerId], references: [employees.id], relationName: "department_manager" }),
   jobPostings: many(jobPostings),
 }));
 
 // ─── Employees ───
 export const employeesRelations = relations(employees, ({ one, many }) => ({
-  department: one(departments, { fields: [employees.departmentId], references: [departments.id] }),
+  department: one(departments, { fields: [employees.departmentId], references: [departments.id], relationName: "employee_department" }),
   manager: one(employees, { fields: [employees.managerId], references: [employees.id] }),
   subordinates: many(employees),
   attendanceRecords: many(attendance),
   leaveRequests: many(leaves),
-  reviews: many(performanceReviews),
+  reviews: many(performanceReviews, { relationName: "performance_review_employee" }),
+  reviewerReviews: many(performanceReviews, { relationName: "performance_review_reviewer" }),
   payrolls: many(payrollRecords),
   shiftAssignments: many(shiftAssignments),
   advances: many(advances),
   bonusPenalties: many(bonusPenalties),
   managedLines: many(productionLines),
   pieceRateRecords: many(pieceRateRecords),
-  managedDepartments: many(departments),
+  managedDepartments: many(departments, { relationName: "department_manager" }),
 }));
 
 // ─── Attendance ───
@@ -68,8 +69,8 @@ export const leavesRelations = relations(leaves, ({ one }) => ({
 
 // ─── Performance Reviews ───
 export const performanceReviewsRelations = relations(performanceReviews, ({ one }) => ({
-  employee: one(employees, { fields: [performanceReviews.employeeId], references: [employees.id] }),
-  reviewer: one(employees, { fields: [performanceReviews.reviewerId], references: [employees.id] }),
+  employee: one(employees, { fields: [performanceReviews.employeeId], references: [employees.id], relationName: "performance_review_employee" }),
+  reviewer: one(employees, { fields: [performanceReviews.reviewerId], references: [employees.id], relationName: "performance_review_reviewer" }),
 }));
 
 // ─── Job Postings ───

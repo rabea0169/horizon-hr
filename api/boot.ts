@@ -9,6 +9,7 @@ import { env } from "./lib/env";
 import { getDb } from "./queries/connection";
 import { employees, inventoryItems, accounts, productionOrders, salesOrders } from "../db/schema";
 import { sql } from "drizzle-orm";
+import { createOAuthCallbackHandler } from "./kimi/auth";
 import { Paths } from "@contracts/constants";
 
 const app = new Hono<{ Bindings: HttpBindings }>();

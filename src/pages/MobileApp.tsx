@@ -156,7 +156,7 @@ export default function MobileApp() {
 
   // ── Stats ──
   const today = new Date().toISOString().split("T")[0];
-  const todayProd = (dailyProd ?? []).filter((d: any) => d.date?.startsWith?.(today));
+  const todayProd = (dailyProd ?? []).filter((d: any) => (d.date instanceof Date ? d.date.toISOString() : String(d.date || "")).startsWith(today));
   const totalProduced = todayProd.reduce((s: number, d: any) => s + (d.produced || 0), 0);
   const activeLines = (lines ?? []).filter((l: any) => l.status === "active").length;
   const presentWorkers = (attendanceList ?? []).filter((a: any) => a.status === "present" || a.status === "late").length;

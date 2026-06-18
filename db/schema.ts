@@ -480,6 +480,7 @@ export const workOrders = mysqlTable("work_orders", {
   priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
   startDate: date("startDate"),
   endDate: date("endDate"),
+  completedStages: text("completedStages"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 });

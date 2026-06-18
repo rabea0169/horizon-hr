@@ -1,6 +1,6 @@
 import { getDb } from "../api/queries/connection";
 import {
-  departments, employees, attendance, leaves, performanceReviews,
+  users, departments, employees, attendance, leaves, performanceReviews,
   jobPostings, candidates, payrollRecords, shifts, shiftAssignments,
   advances, bonusPenalties, productionLines, productionOrders, dailyProduction,
   productionModels, modelStages, pieceRateRecords, machines, inventoryItems,
@@ -8,11 +8,21 @@ import {
   cuttingOrders, workOrders, bundles, bundleTracking, bomRecords,
   qcRecords, mrpRecords, challans, challanItems, subcontracts,
   salesOrders, crmCustomers, crmInteractions, costCalculations,
-  printSettings, systemSettings, productLifecycle, techPacks,
-  designRevisions, sampleReviews, warehouses, warehouseBins,
-  reorderRules, fabricRolls, cutPlans, markerPlans, samRecords,
-  lineBalancing, styleColorSizeMatrix, productionForecasts,
-  buyerPortalUsers, auditLog, accounts, generalLedger, finishedGoods,
+  printSettings, activities, systemSettings, styleColorSizeMatrix, fabricRolls,
+  cutPlans, markerPlans, samRecords, lineBalancing, warehouses, warehouseBins,
+  reorderRules, productLifecycle, techPacks, designRevisions, sampleReviews,
+  customReports, reportTemplates, buyerPortalUsers, productionForecasts,
+  auditLog, companySettings, purchaseRequests, purchaseRequestItems,
+  grns, salesInvoices, purchaseInvoices, paymentVouchers, receiptVouchers,
+  journalVouchers, journalVoucherLines, maintenanceRecords, machineDepreciation,
+  orderAmendments, deliveryReminders, quotations, quotationItems,
+  purchaseOrders, purchaseOrderItems, rfqs, rfqItems, rfqResponses,
+  goodsReceipts, goodsReceiptItems, salesPipelineStages, salesOpportunities,
+  salesCommissions, shipments, shipmentItems, integrationLogs,
+  openingBalances, treasuryAccounts, treasuryTransactions, creditLimits,
+  agingBuckets, fiscalYears, expenseCategories, expenses, finishedGoods,
+  wastageRecords, salesRepVisits, salesRepOrders, defectTypes,
+  accounts, generalLedger
 } from "./schema";
 import { sql } from "drizzle-orm";
 
@@ -31,7 +41,7 @@ async function seed() {
   console.log("🧹 Wiping old data...");
   await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0;`);
   const allTables = [
-    departments, employees, attendance, leaves, performanceReviews,
+    users, departments, employees, attendance, leaves, performanceReviews,
     jobPostings, candidates, payrollRecords, shifts, shiftAssignments,
     advances, bonusPenalties, productionLines, productionOrders, dailyProduction,
     productionModels, modelStages, pieceRateRecords, machines, inventoryItems,
@@ -39,11 +49,21 @@ async function seed() {
     cuttingOrders, workOrders, bundles, bundleTracking, bomRecords,
     qcRecords, mrpRecords, challans, challanItems, subcontracts,
     salesOrders, crmCustomers, crmInteractions, costCalculations,
-    printSettings, systemSettings, productLifecycle, techPacks,
-    designRevisions, sampleReviews, warehouses, warehouseBins,
-    reorderRules, fabricRolls, cutPlans, markerPlans, samRecords,
-    lineBalancing, styleColorSizeMatrix, productionForecasts,
-    buyerPortalUsers, auditLog, accounts, generalLedger, finishedGoods
+    printSettings, activities, systemSettings, styleColorSizeMatrix, fabricRolls,
+    cutPlans, markerPlans, samRecords, lineBalancing, warehouses, warehouseBins,
+    reorderRules, productLifecycle, techPacks, designRevisions, sampleReviews,
+    customReports, reportTemplates, buyerPortalUsers, productionForecasts,
+    auditLog, companySettings, purchaseRequests, purchaseRequestItems,
+    grns, salesInvoices, purchaseInvoices, paymentVouchers, receiptVouchers,
+    journalVouchers, journalVoucherLines, maintenanceRecords, machineDepreciation,
+    orderAmendments, deliveryReminders, quotations, quotationItems,
+    purchaseOrders, purchaseOrderItems, rfqs, rfqItems, rfqResponses,
+    goodsReceipts, goodsReceiptItems, salesPipelineStages, salesOpportunities,
+    salesCommissions, shipments, shipmentItems, integrationLogs,
+    openingBalances, treasuryAccounts, treasuryTransactions, creditLimits,
+    agingBuckets, fiscalYears, expenseCategories, expenses, finishedGoods,
+    wastageRecords, salesRepVisits, salesRepOrders, defectTypes,
+    accounts, generalLedger
   ];
   for (const table of allTables) {
     await db.delete(table);
@@ -772,7 +792,902 @@ async function seed() {
     console.log(`  ✓ GL Entry JV-2025-001 created (Balanced: 100,000)`);
   }
 
-  console.log("\n✅ Seed complete! All 60 tables populated.");
+  const seededSuppliers = await db.select().from(suppliers);
+
+  // Redefining colors and sizes locally for safety
+  const mockColors = ["أبيض", "أسود", "أحمر", "أزرق", "رمادي"];
+  const mockSizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+  // ─── 38. Users ───
+  console.log("👤 Seeding system users...");
+  await db.insert(users).values({ unionId: "usr_1", name: "أحمد المسؤول", email: "admin@horizon.eg", role: "admin" } as any);
+  await db.insert(users).values({ unionId: "usr_2", name: "محمد المستخدم", email: "user@horizon.eg", role: "user" } as any);
+
+  // ─── 39. Shift Assignments ───
+  console.log("🕐 Seeding shift assignments...");
+  for (const emp of emps) {
+    await db.insert(shiftAssignments).values({
+      employeeId: emp.id,
+      shiftId: randPick(shiftRecs).id,
+      startDate: daysAgo(30),
+    } as any);
+  }
+
+  // ─── 40. Inventory Transactions ───
+  console.log("📦 Seeding inventory transactions...");
+  const seededInvItems = await db.select().from(inventoryItems);
+  for (const item of seededInvItems) {
+    await db.insert(inventoryTransactions).values({
+      itemId: item.id,
+      type: "in",
+      quantity: item.quantity || 100,
+      notes: "رصيد افتتاحي للمخزن",
+      createdAt: daysAgo(30),
+    } as any);
+  }
+
+  // ─── 41. Supply Orders & Supply Order Items ───
+  console.log("🚚 Seeding supply orders...");
+  const rawMaterialsOnly = seededInvItems.filter(i => i.category !== "finished_goods");
+  for (let i = 0; i < 10; i++) {
+    const supplier = randPick(seededSuppliers);
+    const orderNum = `SPO-${String(i+1).padStart(4, "0")}`;
+    await db.insert(supplyOrders).values({
+      orderNumber: orderNum,
+      supplierId: supplier.id,
+      status: randPick(["received", "sent", "partial"]),
+      totalAmount: "5000.00",
+      expectedDate: daysAgo(-5),
+      receivedDate: daysAgo(2),
+    } as any);
+    const order = (await db.select().from(supplyOrders).where(sql`orderNumber = ${orderNum}`))[0];
+    const item1 = randPick(rawMaterialsOnly);
+    if (order && item1) {
+      await db.insert(supplyOrderItems).values({
+        supplyOrderId: order.id,
+        itemId: item1.id,
+        quantity: rand(100, 500),
+        unitPrice: item1.unitCost || "10.00",
+        receivedQuantity: rand(50, 100),
+      } as any);
+    }
+  }
+
+  // ─── 42. Cutting Orders ───
+  console.log("✂️ Seeding cutting orders...");
+  const cuttingEmps = emps.filter(e => e.jobTitle.includes("قص") || e.role === "عامل");
+  const cutWorker = cuttingEmps[0] || emps[0];
+  for (let i = 0; i < 15; i++) {
+    const model = randPick(models);
+    await db.insert(cuttingOrders).values({
+      orderNumber: `CO-${String(i+1).padStart(4, "0")}`,
+      modelId: model.id,
+      fabricDescription: "خامة قطن ممتازة",
+      color: randPick(mockColors),
+      size: randPick(mockSizes),
+      quantity: rand(500, 2000),
+      cutQuantity: rand(100, 500),
+      status: randPick(["cutting", "completed", "pending"]),
+      assignedTo: cutWorker.id,
+      dueDate: daysAgo(-10),
+    } as any);
+  }
+
+  // ─── 43. Bundle Tracking ───
+  console.log("📍 Seeding bundle tracking...");
+  const seededBundles = await db.select().from(bundles);
+  for (const bundle of seededBundles.slice(0, 10)) {
+    await db.insert(bundleTracking).values({
+      bundleId: bundle.id,
+      stage: bundle.currentStage || "قص",
+      employeeId: randPick(emps).id,
+      notes: "تم الفحص والمسح بنجاح",
+    } as any);
+  }
+
+  // ─── 44. Challans & Challan Items ───
+  console.log("🚛 Seeding challans...");
+  for (let i = 0; i < 10; i++) {
+    const challanNum = `CH-${String(i+1).padStart(4, "0")}`;
+    await db.insert(challans).values({
+      challanNumber: challanNum,
+      type: "dispatch",
+      customerName: randPick(crmCusts).name,
+      totalItems: rand(100, 500),
+      status: randPick(["shipped", "delivered", "ready"]),
+      vehicleNumber: "ق ص أ 1234",
+      driverName: "سيد أبو العلا",
+      shippedAt: daysAgo(2),
+    } as any);
+    const challan = (await db.select().from(challans).where(sql`challanNumber = ${challanNum}`))[0];
+    if (challan) {
+      await db.insert(challanItems).values({
+        challanId: challan.id,
+        description: "تيشيرتات معبأة",
+        quantity: rand(100, 500),
+      } as any);
+    }
+  }
+
+  // ─── 45. Subcontracts ───
+  console.log("🤝 Seeding subcontracting contracts...");
+  for (let i = 0; i < 10; i++) {
+    const supplier = randPick(seededSuppliers);
+    await db.insert(subcontracts).values({
+      contractNumber: `SC-${String(i+1).padStart(4, "0")}`,
+      supplierId: supplier.id,
+      modelId: randPick(models).id,
+      description: "تفصيل خياطة وتجهيز عينات عاجلة",
+      quantity: rand(500, 2000),
+      receivedQuantity: rand(100, 500),
+      unitPrice: "15.00",
+      totalAmount: "15000.00",
+      status: randPick(["in_progress", "completed", "pending"]),
+      startDate: daysAgo(10),
+      endDate: daysAgo(-10),
+    } as any);
+  }
+
+  // ─── 46. CRM Interactions ───
+  console.log("📞 Seeding CRM interactions...");
+  for (const customer of crmCusts) {
+    await db.insert(crmInteractions).values({
+      customerId: customer.id,
+      type: randPick(["call", "meeting", "email"]),
+      subject: "متابعة طلبية المبيعات",
+      content: "تم الاتصال بالعميل وأفاد برغبته في زيادة كمية الطلبية القادمة بنسبة 20%",
+      followUpDate: daysAgo(-7),
+      createdBy: randPick(emps).id,
+    } as any);
+  }
+
+  // ─── 47. Cost Calculations ───
+  console.log("📊 Seeding cost calculations...");
+  for (const model of models) {
+    await db.insert(costCalculations).values({
+      modelId: model.id,
+      fabricCost: "25.00",
+      laborCost: "15.00",
+      overheadCost: "10.00",
+      trimCost: "5.00",
+      otherCost: "5.00",
+      totalCost: "60.00",
+      profitMargin: "25.00",
+      sellingPrice: "75.00",
+      minOrderQuantity: 100,
+      notes: "حساب تكلفة تقديري بناء على عينات الموسم الماضي"
+    } as any);
+  }
+
+  // ─── 48. Product Lifecycle (PLM) ───
+  console.log("🔄 Seeding product lifecycle stages...");
+  const lifecycleStages = ["concept", "design", "tech_pack", "sampling", "costing", "production"] as const;
+  for (const model of models.slice(0, 5)) {
+    for (let sIdx = 0; sIdx < lifecycleStages.length; sIdx++) {
+      await db.insert(productLifecycle).values({
+        modelId: model.id,
+        stage: lifecycleStages[sIdx],
+        stageOrder: sIdx + 1,
+        status: sIdx < 4 ? "completed" as const : sIdx === 4 ? "in_progress" as const : "pending" as const,
+        assignedTo: randPick(emps).id,
+        startDate: daysAgo(15 - sIdx * 2),
+        targetDate: daysAgo(-5),
+      } as any);
+    }
+  }
+
+  // ─── 49. Design Revisions & Sample Reviews ───
+  console.log("📐 Seeding design revisions and sample reviews...");
+  const seededTechPacks = await db.select().from(techPacks);
+  for (const tp of seededTechPacks) {
+    await db.insert(designRevisions).values({
+      modelId: tp.modelId,
+      techPackId: tp.id,
+      revisionNumber: "1.1",
+      changeDescription: "تعديل طول الكم بمقدار 2 سم بناء على طلب العميل",
+      status: "approved",
+    } as any);
+    await db.insert(sampleReviews).values({
+      modelId: tp.modelId,
+      techPackId: tp.id,
+      sampleType: "fit",
+      size: "M",
+      color: "أزرق",
+      reviewerName: "جون دو",
+      reviewDate: daysAgo(5),
+      comments: "القياسات ممتازة ومطابقة للمواصفات",
+      decision: "approved",
+      status: "decided",
+    } as any);
+  }
+
+  // ─── 50. Warehouse Bins ───
+  console.log("🏭 Seeding warehouse bins...");
+  for (const wh of whs) {
+    for (let r = 1; r <= 3; r++) {
+      await db.insert(warehouseBins).values({
+        warehouseId: wh.id,
+        binCode: `BIN-${wh.code}-R${r}`,
+        aisle: "A",
+        rack: String(r),
+        shelf: "1",
+        capacity: 1000,
+        currentQty: 100,
+        status: "partial",
+      } as any);
+    }
+  }
+
+  // ─── 51. Reorder Rules ───
+  console.log("🔔 Seeding inventory reorder rules...");
+  for (const item of rawMaterialsOnly.slice(0, 5)) {
+    await db.insert(reorderRules).values({
+      itemId: item.id,
+      warehouseId: whs[0].id,
+      supplierId: randPick(seededSuppliers).id,
+      minStock: 100,
+      maxStock: 1000,
+      reorderPoint: 200,
+      reorderQty: 500,
+      autoReorder: true,
+      status: "active",
+    } as any);
+  }
+
+  // ─── 52. Cut Plans & Marker Plans ───
+  console.log("📐 Seeding cut plans and marker plans...");
+  for (let i = 0; i < 5; i++) {
+    const order = randPick(orders);
+    const model = randPick(models);
+    const planNum = `CP-${String(i+1).padStart(4, "0")}`;
+    await db.insert(cutPlans).values({
+      planNumber: planNum,
+      orderId: order.id,
+      modelId: model.id,
+      layCount: 50,
+      plyHeight: 10,
+      spreadType: "face_up",
+      totalPieces: 500,
+      status: "planned",
+    } as any);
+    const plan = (await db.select().from(cutPlans).where(sql`planNumber = ${planNum}`))[0];
+    if (plan) {
+      await db.insert(markerPlans).values({
+        markerNumber: `MP-${plan.planNumber}`,
+        cutPlanId: plan.id,
+        modelId: plan.modelId,
+        markerLength: "6.50",
+        markerWidth: "1.50",
+        fabricUtilization: "85.50",
+        piecesPerMarker: 4,
+        status: "approved",
+      } as any);
+    }
+  }
+
+  // ─── 53. Line Balancing ───
+  console.log("📈 Seeding line balancing configurations...");
+  for (const line of lines) {
+    const model = randPick(models);
+    await db.insert(lineBalancing).values({
+      lineId: line.id,
+      modelId: model.id,
+      operationSequence: 1,
+      operationName: "خياطة الكتف",
+      samMinutes: "1.20",
+      workstations: 2,
+      operators: 2,
+      targetOutput: 400,
+      actualOutput: 380,
+      efficiency: "95.00",
+      bottleneck: false,
+    } as any);
+  }
+
+  // ─── 54. Buyer Portal Users ───
+  console.log("💻 Seeding buyer portal users...");
+  for (const customer of crmCusts) {
+    await db.insert(buyerPortalUsers).values({
+      customerId: customer.id,
+      fullName: `مشتري من ${customer.name}`,
+      email: `buyer@${customer.email?.split("@")[1] || "buyer.eg"}`,
+      password: "password_hash",
+      role: "buyer_admin",
+      status: "active",
+    } as any);
+  }
+
+  // ─── 55. Purchase Requests & Items ───
+  console.log("🛒 Seeding purchase requests...");
+  for (let i = 0; i < 5; i++) {
+    const prNum = `PR-${String(i+1).padStart(4, "0")}`;
+    await db.insert(purchaseRequests).values({
+      prNumber: prNum,
+      department: "الخياطة",
+      requestedBy: "أحمد طلبات",
+      status: randPick(["approved", "pending_approval", "draft"]),
+      priority: "normal",
+      requiredDate: daysAgo(-15),
+    } as any);
+    const pr = (await db.select().from(purchaseRequests).where(sql`prNumber = ${prNum}`))[0];
+    if (pr) {
+      await db.insert(purchaseRequestItems).values({
+        purchaseRequestId: pr.id,
+        itemId: randPick(rawMaterialsOnly).id,
+        quantity: rand(100, 1000),
+        notes: "مطلوب للإنتاج المستقبلي",
+      } as any);
+    }
+  }
+  const seededPRs = await db.select().from(purchaseRequests);
+
+  // ─── 56. Purchase Orders & Items ───
+  console.log("📦 Seeding purchase orders...");
+  for (let i = 0; i < 5; i++) {
+    const supplier = randPick(seededSuppliers);
+    const pr = seededPRs[i] || seededPRs[0];
+    const poNum = `PO-${String(i+1).padStart(4, "0")}`;
+    await db.insert(purchaseOrders).values({
+      poNumber: poNum,
+      supplierId: supplier.id,
+      purchaseRequestId: pr?.id || null,
+      orderDate: daysAgo(10),
+      expectedDeliveryDate: daysAgo(-10),
+      subtotal: "15000.00",
+      totalAmount: "17100.00",
+      status: randPick(["confirmed", "sent", "draft"]),
+      paymentTerms: "30 يوم",
+    } as any);
+    const po = (await db.select().from(purchaseOrders).where(sql`poNumber = ${poNum}`))[0];
+    if (po) {
+      await db.insert(purchaseOrderItems).values({
+        purchaseOrderId: po.id,
+        itemId: randPick(rawMaterialsOnly).id,
+        quantity: rand(500, 2000),
+        unitPrice: "10.00",
+        total: "15000.00",
+      } as any);
+    }
+  }
+  const seededPOs = await db.select().from(purchaseOrders);
+
+  // ─── 57. RFQs, RFQ Items & Responses ───
+  console.log("📝 Seeding RFQs...");
+  for (let i = 0; i < 5; i++) {
+    const pr = seededPRs[i] || seededPRs[0];
+    const rfqNum = `RFQ-${String(i+1).padStart(4, "0")}`;
+    await db.insert(rfqs).values({
+      rfqNumber: rfqNum,
+      purchaseRequestId: pr?.id || null,
+      title: "شراء لوازم الخيوط والأزرار",
+      description: "مطلوب عروض أسعار لتوريد خيوط بوليستر وأزرار بيضاء وسوداء",
+      status: randPick(["bidding", "sent", "draft"]),
+      deadline: daysAgo(-5),
+    } as any);
+    const rfq = (await db.select().from(rfqs).where(sql`rfqNumber = ${rfqNum}`))[0];
+    if (rfq) {
+      await db.insert(rfqItems).values({
+        rfqId: rfq.id,
+        itemId: randPick(rawMaterialsOnly).id,
+        quantity: 1000,
+        specifications: "مواصفات قياسية مضادة للقطع",
+      } as any);
+      for (const supplier of seededSuppliers.slice(0, 2)) {
+        await db.insert(rfqResponses).values({
+          rfqId: rfq.id,
+          supplierId: supplier.id,
+          unitPrice: "12.00",
+          totalPrice: "12000.00",
+          deliveryDays: 5,
+        } as any);
+      }
+    }
+  }
+
+  // ─── 58. Goods Receipts & Items ───
+  console.log("✅ Seeding goods receipts (GRN)...");
+  for (let i = 0; i < 5; i++) {
+    const po = seededPOs[i] || seededPOs[0];
+    const supplier = randPick(seededSuppliers);
+    const grNum = `GR-${String(i+1).padStart(4, "0")}`;
+    if (po) {
+      await db.insert(goodsReceipts).values({
+        grNumber: grNum,
+        purchaseOrderId: po.id,
+        supplierId: supplier.id,
+        receiptDate: daysAgo(2),
+        invoiceNumber: `INV-${po.poNumber}`,
+        subtotal: "15000.00",
+        totalAmount: "17100.00",
+        status: "fully_accepted",
+      } as any);
+      const gr = (await db.select().from(goodsReceipts).where(sql`grNumber = ${grNum}`))[0];
+      if (gr) {
+        await db.insert(goodsReceiptItems).values({
+          goodsReceiptId: gr.id,
+          purchaseOrderItemId: 1, // dummy
+          itemId: randPick(rawMaterialsOnly).id,
+          orderedQuantity: 1000,
+          receivedQuantity: 1000,
+          acceptedQuantity: 1000,
+        } as any);
+      }
+    }
+  }
+
+  // ─── 59. Sales Pipeline Stages & Opportunities ───
+  console.log("💰 Seeding sales pipeline and opportunities...");
+  const pipelineStages = [
+    { name: "فرصة جديدة", order: 1, color: "#3182ce", probability: "10.00" },
+    { name: "تواصل أولي", order: 2, color: "#805ad5", probability: "30.00" },
+    { name: "عرض فني ومالي", order: 3, color: "#dd6b20", probability: "60.00" },
+    { name: "تفاوض نهائي", order: 4, color: "#319795", probability: "90.00" },
+  ];
+  for (const stage of pipelineStages) {
+    await db.insert(salesPipelineStages).values(stage);
+  }
+  const dbStages = await db.select().from(salesPipelineStages);
+  for (let i = 0; i < 10; i++) {
+    await db.insert(salesOpportunities).values({
+      title: `طلبية مبيعات تصدير - ${i+1}`,
+      customerId: randPick(crmCusts).id,
+      stageId: randPick(dbStages).id,
+      expectedValue: "50000.00",
+      probability: "50.00",
+      expectedCloseDate: daysAgo(-30),
+      status: "open",
+    } as any);
+  }
+
+  // ─── 60. Sales Commissions ───
+  console.log("💸 Seeding sales commissions...");
+  const salesEmps = emps.filter(e => e.role.includes("مندوب") || e.jobTitle.includes("مبيعات"));
+  const commissionWorker = salesEmps[0] || emps[0];
+  const seededSalesOrders = await db.select().from(salesOrders);
+  for (let i = 0; i < seededSalesOrders.length; i++) {
+    await db.insert(salesCommissions).values({
+      employeeId: commissionWorker.id,
+      salesOrderId: seededSalesOrders[i].id,
+      commissionRate: "5.00",
+      saleAmount: seededSalesOrders[i].totalAmount || "10000",
+      commissionAmount: String(Number(seededSalesOrders[i].totalAmount || 10000) * 0.05),
+      isPaid: randPick([true, false]),
+      period: "2025-06",
+      notes: "حساب عمولة المبيعات للموسم الحالي",
+    } as any);
+  }
+
+  // ─── 61. Shipments & Shipment Items ───
+  console.log("📦 Seeding shipments...");
+  for (let i = 0; i < 5; i++) {
+    const order = seededSalesOrders[i] || seededSalesOrders[0];
+    if (order) {
+      const trkNum = `TRK-${String(i+1).padStart(6, "0")}`;
+      await db.insert(shipments).values({
+        trackingNumber: trkNum,
+        salesOrderId: order.id,
+        customerId: order.customerId,
+        carrier: "DHL Egypt",
+        shippingDate: daysAgo(3),
+        estimatedDeliveryDate: daysAgo(-1),
+        shippingCost: "500.00",
+        status: "in_transit",
+      } as any);
+      const sh = (await db.select().from(shipments).where(sql`trackingNumber = ${trkNum}`))[0];
+      if (sh) {
+        await db.insert(shipmentItems).values({
+          shipmentId: sh.id,
+          salesOrderItemId: 1, // dummy
+          itemId: randPick(rawMaterialsOnly).id,
+          quantity: 100,
+        } as any);
+      }
+    }
+  }
+
+  // ─── 62. Machine Maintenance Records ───
+  console.log("⚙️ Seeding machine maintenance...");
+  const seededMachines = await db.select().from(machines);
+  for (const machine of seededMachines) {
+    await db.insert(maintenanceRecords).values({
+      machineId: machine.id,
+      maintenanceType: randPick(["preventive", "corrective"]),
+      title: "صيانة ماكينة دورية",
+      description: "تنظيف الأجزاء الداخلية وتغيير الزيت وفحص السيور والتروس",
+      scheduledDate: daysAgo(5),
+      completedDate: daysAgo(5),
+      cost: "250.00",
+      technicianName: "المهندس عادل صيانة",
+      status: "completed",
+    } as any);
+  }
+
+  // ─── 63. Sales Invoices, GRNs & Purchase Invoices ───
+  console.log("🧾 Seeding financial invoices (Sales & Purchase)...");
+  // Sales Invoices
+  for (let i = 0; i < seededSalesOrders.length; i++) {
+    const order = seededSalesOrders[i];
+    await db.insert(salesInvoices).values({
+      invoiceNumber: `SINV-2025-${String(i+1).padStart(4, "0")}`,
+      salesOrderId: order.id,
+      customerId: order.customerId,
+      issueDate: daysAgo(15),
+      dueDate: daysAgo(-15),
+      subtotal: order.totalAmount || "5000",
+      vatAmount: String(Number(order.totalAmount || 5000) * 0.14),
+      totalAmount: String(Number(order.totalAmount || 5000) * 1.14),
+      status: "issued",
+    } as any);
+  }
+  // GRNs (for purchase invoice references)
+  for (let i = 0; i < 5; i++) {
+    await db.insert(grns).values({
+      grnNumber: `GRN-2025-${String(i+1).padStart(4, "0")}`,
+      supplyOrderId: i+1, // dummy ref
+      supplierId: seededSuppliers[0].id,
+      receivedDate: daysAgo(5),
+      subtotal: "10000.00",
+      totalAmount: "11400.00",
+      status: "fully_received",
+    } as any);
+  }
+  const dbGRNs = await db.select().from(grns);
+  // Purchase Invoices
+  for (let i = 0; i < dbGRNs.length; i++) {
+    await db.insert(purchaseInvoices).values({
+      invoiceNumber: `PINV-2025-${String(i+1).padStart(4, "0")}`,
+      grnId: dbGRNs[i].id,
+      supplierId: dbGRNs[i].supplierId,
+      issueDate: daysAgo(5),
+      dueDate: daysAgo(-25),
+      subtotal: "10000.00",
+      totalAmount: "11400.00",
+      status: "received",
+    } as any);
+  }
+  const dbSalesInvoices = await db.select().from(salesInvoices);
+
+  // ─── 64. Opening Balances ───
+  console.log("💵 Seeding opening balances...");
+  for (const acct of dbAccts) {
+    await db.insert(openingBalances).values({
+      fiscalYear: "2025",
+      accountId: acct.id,
+      debit: acct.code.startsWith("5") || acct.code.startsWith("1") ? "10000.00" : "0.00",
+      credit: acct.code.startsWith("2") || acct.code.startsWith("3") || acct.code.startsWith("4") ? "10000.00" : "0.00",
+      balance: "10000.00",
+      posted: true,
+    } as any);
+  }
+
+  // ─── 65. Treasury Accounts & Transactions ───
+  console.log("💰 Seeding treasury accounts and logs...");
+  const cashAcct = dbAccts.find(a => a.code === "110000");
+  const bankAcct = dbAccts.find(a => a.code === "120000");
+  await db.insert(treasuryAccounts).values({
+    name: "الخزينة الرئيسية للمصنع",
+    code: "TR-CASH-01",
+    type: "cash",
+    openingBalance: "50000.00",
+    currentBalance: "50000.00",
+    isDefault: true,
+    accountId: cashAcct?.id || 1,
+  } as any);
+  await db.insert(treasuryAccounts).values({
+    name: "حساب البنك الأهلي الجاري",
+    code: "TR-BANK-01",
+    type: "bank",
+    bankName: "البنك الأهلي المصري",
+    accountNumber: "12345678901234",
+    openingBalance: "200000.00",
+    currentBalance: "200000.00",
+    isDefault: false,
+    accountId: bankAcct?.id || 2,
+  } as any);
+  const dbTreasuries = await db.select().from(treasuryAccounts);
+  for (const tr of dbTreasuries) {
+    await db.insert(treasuryTransactions).values({
+      treasuryAccountId: tr.id,
+      type: "receipt",
+      amount: "5000.00",
+      date: daysAgo(2),
+      reference: "رصيد افتتاح",
+      partyType: "other",
+      partyName: "الخزينة",
+    } as any);
+  }
+
+  // ─── 66. Credit Limits & Aging Buckets ───
+  console.log("💳 Seeding credit limits and debt aging...");
+  for (const customer of crmCusts) {
+    await db.insert(creditLimits).values({
+      customerId: customer.id,
+      creditLimit: "100000.00",
+      paymentTermDays: 30,
+      currentBalance: "15000.00",
+      totalInvoiced: "25000.00",
+      totalPaid: "10000.00",
+      isActive: true,
+    } as any);
+    const customerInvoice = dbSalesInvoices.find(inv => inv.customerId === customer.id);
+    if (customerInvoice) {
+      await db.insert(agingBuckets).values({
+        customerId: customer.id,
+        invoiceId: customerInvoice.id,
+        invoiceNumber: customerInvoice.invoiceNumber,
+        invoiceDate: customerInvoice.issueDate,
+        dueDate: customerInvoice.dueDate || daysAgo(-30),
+        amount: customerInvoice.totalAmount,
+        balance: customerInvoice.totalAmount,
+        bucket1_30: customerInvoice.totalAmount,
+      } as any);
+    }
+  }
+
+  // ─── 67. Vouchers (Payment, Receipt, Journal & Lines) ───
+  console.log("🎫 Seeding vouchers (payment, receipt, journal)...");
+  for (let i = 0; i < 5; i++) {
+    await db.insert(paymentVouchers).values({
+      voucherNumber: `PV-${String(i+1).padStart(4, "0")}`,
+      voucherDate: daysAgo(5),
+      payeeName: "مصاريف الكهرباء والصيانة",
+      payeeType: "other",
+      amount: "1500.00",
+      paymentMethod: "cash",
+      status: "approved",
+    } as any);
+    await db.insert(receiptVouchers).values({
+      voucherNumber: `RV-${String(i+1).padStart(4, "0")}`,
+      voucherDate: daysAgo(5),
+      payerName: "دفعة تحت الحساب العميل",
+      payerType: "customer",
+      payerId: crmCusts[0].id,
+      amount: "5000.00",
+      paymentMethod: "cash",
+      status: "approved",
+    } as any);
+    const jvNum = `JV-${String(i+1).padStart(4, "0")}`;
+    await db.insert(journalVouchers).values({
+      voucherNumber: jvNum,
+      voucherDate: daysAgo(5),
+      description: "قيد إثبات استهلاك وإهلاك المعدات الشهري",
+      totalDebit: "2000.00",
+      totalCredit: "2000.00",
+      status: "posted",
+    } as any);
+    const jv = (await db.select().from(journalVouchers).where(sql`voucherNumber = ${jvNum}`))[0];
+    if (jv) {
+      await db.insert(journalVoucherLines).values({
+        journalVoucherId: jv.id,
+        accountCode: "520000",
+        accountName: "مصروفات إهلاك الأصول",
+        debit: "2000.00",
+        credit: "0.00",
+      } as any);
+      await db.insert(journalVoucherLines).values({
+        journalVoucherId: jv.id,
+        accountCode: "110000",
+        accountName: "مجمع إهلاك الأصول",
+        debit: "0.00",
+        credit: "2000.00",
+      } as any);
+    }
+  }
+
+  // ─── 68. Defect Types ───
+  console.log("❌ Seeding defect types...");
+  const defects = [
+    { code: "DEF-SEW-01", name: "خياطة مفكوكة", category: "sewing" as const, severity: "major" as const },
+    { code: "DEF-CUT-01", name: "قص غير متساوي", category: "cutting" as const, severity: "critical" as const },
+    { code: "DEF-FAB-01", name: "بقعة زيت في القماش", category: "appearance" as const, severity: "minor" as const },
+    { code: "DEF-FIT-01", name: "خطأ في المقاس النهائي", category: "measurement" as const, severity: "major" as const },
+  ];
+  for (const d of defects) {
+    await db.insert(defectTypes).values(d);
+  }
+
+  // ─── 69. Expense Categories & Expenses ───
+  console.log("💸 Seeding expense records...");
+  const categories = [
+    { name: "إيجار المصنع والمنشآت", code: "EXP-RENT" },
+    { name: "كهرباء ومياه وإنترنت", code: "EXP-UTIL" },
+    { name: "رواتب ومكافآت العاملين", code: "EXP-SAL" },
+    { name: "صيانة ماكينات ومعدات", code: "EXP-MAINT" },
+  ];
+  for (const cat of categories) {
+    await db.insert(expenseCategories).values(cat);
+  }
+  const dbCategories = await db.select().from(expenseCategories);
+  for (let i = 0; i < 5; i++) {
+    const cat = randPick(dbCategories);
+    await db.insert(expenses).values({
+      expenseNumber: `EXP-${String(i+1).padStart(4, "0")}`,
+      categoryId: cat.id,
+      title: `فاتورة ${cat.name} لشهر يونيو`,
+      amount: "5000.00",
+      expenseDate: daysAgo(5),
+      status: "paid",
+      totalAmount: "5700.00",
+      vatAmount: "700.00",
+    } as any);
+  }
+
+  // ─── 70. Wastage Records ───
+  console.log("♻️ Seeding wastage logs...");
+  for (let i = 0; i < 5; i++) {
+    await db.insert(wastageRecords).values({
+      wastageNumber: `WST-${String(i+1).padStart(4, "0")}`,
+      sourceType: "cutting",
+      modelId: models[0].id,
+      itemId: rawMaterialsOnly[0].id,
+      wastageType: "end_bit",
+      quantity: "1.500",
+      unit: "متر",
+      unitCost: "50.00",
+      totalCost: "75.00",
+      status: "approved",
+      wastageDate: daysAgo(5),
+    } as any);
+  }
+
+  // ─── 71. Sales Rep Visits & Orders ───
+  console.log("🕴️ Seeding sales representative visits and orders...");
+  const repWorker = salesEmps[0] || emps[0];
+  for (let i = 0; i < 5; i++) {
+    const customer = randPick(crmCusts);
+    const visitNum = `VIS-${String(i+1).padStart(4, "0")}`;
+    await db.insert(salesRepVisits).values({
+      visitNumber: visitNum,
+      salesRepId: repWorker.id,
+      salesRepName: repWorker.fullName,
+      customerId: customer.id,
+      customerName: customer.name,
+      visitType: "scheduled",
+      status: "completed",
+      scheduledDate: daysAgo(1),
+      actualStartTime: daysAgo(1),
+      purpose: "زيارة دورية لعرض المنتجات الجديدة ومتابعة الحسابات",
+      outcome: "تم الاتفاق على طلبية جديدة بقيمة 15000 جنيه وتم تحصيل 5000 جنيه دفعة كاش",
+    } as any);
+    const visit = (await db.select().from(salesRepVisits).where(sql`visitNumber = ${visitNum}`))[0];
+    if (visit) {
+      await db.insert(salesRepOrders).values({
+        orderNumber: `SRO-${String(i+1).padStart(4, "0")}`,
+        salesRepId: repWorker.id,
+        salesRepName: repWorker.fullName,
+        visitId: visit.id,
+        customerId: customer.id,
+        customerName: customer.name,
+        modelId: models[0].id,
+        modelName: models[0].name,
+        color: "أبيض",
+        size: "M",
+        quantity: 200,
+        unitPrice: "75.00",
+        totalAmount: "15000.00",
+        grandTotal: "15000.00",
+        status: "approved",
+      } as any);
+    }
+  }
+
+  // ─── 72. Quotations & Quotation Items ───
+  console.log("📄 Seeding customer quotations...");
+  for (let i = 0; i < 5; i++) {
+    const customer = randPick(crmCusts);
+    const qtNum = `QT-${String(i+1).padStart(4, "0")}`;
+    await db.insert(quotations).values({
+      quotationNumber: qtNum,
+      customerId: customer.id,
+      issueDate: daysAgo(10),
+      expiryDate: daysAgo(-20),
+      subtotal: "10000.00",
+      totalAmount: "11400.00",
+      status: randPick(["sent", "accepted", "draft"]),
+    } as any);
+    const qt = (await db.select().from(quotations).where(sql`quotationNumber = ${qtNum}`))[0];
+    if (qt) {
+      await db.insert(quotationItems).values({
+        quotationId: qt.id,
+        modelId: models[0].id,
+        description: "تيشيرت قطن مميز مطرز بشعار العميل",
+        quantity: 200,
+        unitPrice: "50.00",
+        lineTotal: "10000.00",
+      } as any);
+    }
+  }
+
+  // ─── 73. Activities (Audit Trail) ───
+  console.log("📝 Seeding system activity logs...");
+  for (let i = 0; i < 15; i++) {
+    await db.insert(activities).values({
+      userId: 1,
+      userName: "أحمد المسؤول",
+      action: randPick(["دخول النظام", "إنشاء طلبية مبيعات", "تعديل إعدادات"]),
+      entityType: "system",
+      description: "تفاصيل العملية والنشاط تمت بنجاح",
+    } as any);
+  }
+
+  // ─── 74. Machine Depreciation ───
+  console.log("📉 Seeding machine depreciation logs...");
+  for (const machine of seededMachines) {
+    await db.insert(machineDepreciation).values({
+      machineId: machine.id,
+      year: 2025,
+      period: "06-2025",
+      depreciationAmount: "500.00",
+      accumulatedDepreciation: "2000.00",
+      bookValue: "18000.00",
+    } as any);
+  }
+
+  // ─── 75. Order Amendments ───
+  console.log("✏️ Seeding sales order amendments...");
+  for (let i = 0; i < 5; i++) {
+    const order = seededSalesOrders[0];
+    if (order) {
+      await db.insert(orderAmendments).values({
+        salesOrderId: order.id,
+        fieldName: "quantity",
+        oldValue: "500",
+        newValue: "600",
+        reason: "زيادة الطلب الفعلي من الفروع التابعة للعميل",
+      } as any);
+    }
+  }
+
+  // ─── 76. Delivery Reminders ───
+  console.log("⏰ Seeding delivery reminders...");
+  for (let i = 0; i < 5; i++) {
+    const order = seededSalesOrders[0];
+    if (order) {
+      await db.insert(deliveryReminders).values({
+        salesOrderId: order.id,
+        reminderType: "7_days",
+        sent: true,
+        sentAt: daysAgo(1),
+      } as any);
+    }
+  }
+
+  // ─── 77. Fiscal Years ───
+  console.log("📅 Seeding fiscal years...");
+  await db.insert(fiscalYears).values({
+    name: "FY-2025",
+    startDate: new Date("2025-01-01"),
+    endDate: new Date("2025-12-31"),
+    status: "open",
+    isCurrent: true,
+  } as any);
+
+  // ─── 78. Company Settings ───
+  console.log("🏢 Seeding company profile settings...");
+  await db.insert(companySettings).values({
+    companyName: "شركة هورايزن للملابس الجاهزة والمنسوجات",
+    companyNameEn: "Horizon Garment & Textiles Co.",
+    address: "العاشر من رمضان، المنطقة الصناعية الثالثة",
+    phone: "010-000-1111",
+    email: "management@horizon.eg",
+    taxNumber: "987-654-321",
+    commercialRegister: "CR-12345",
+    currency: "EGP",
+  } as any);
+
+  // ─── 79. Integration Logs ───
+  console.log("🔗 Seeding automatic integration logs...");
+  await db.insert(integrationLogs).values({
+    event: "sales_order_sync",
+    sourceModule: "sales",
+    targetModule: "accounting",
+    sourceNumber: "SO-0001",
+    targetNumber: "JV-2025-0012",
+    status: "success",
+    details: "تم ترحيل وتأكيد الفاتورة بنجاح في نظام الحسابات والمخازن",
+  } as any);
+
+  console.log("\n✅ Seed complete! All tables populated with comprehensive mock data.");
 }
 
 seed().catch((err) => {

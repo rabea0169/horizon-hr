@@ -13,19 +13,19 @@ export const attendanceRouter = createRouter({
         employeeId: z.number().optional(),
         page: z.number().default(1),
         pageSize: z.number().default(50),
-      })
+      }).optional()
     )
     .query(async ({ input }) => {
       const db = getDb();
-      const page = input.page ?? 1;
-      const pageSize = input.pageSize ?? 50;
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 50;
       const offset = (page - 1) * pageSize;
 
       const conditions = [];
-      if (input.date) {
+      if (input?.date) {
         conditions.push(eq(attendance.date, new Date(input.date)));
       }
-      if (input.employeeId) {
+      if (input?.employeeId) {
         conditions.push(eq(attendance.employeeId, input.employeeId));
       }
 

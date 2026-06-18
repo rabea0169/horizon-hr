@@ -67,7 +67,7 @@ export default function Departments() {
                   {expandedId === dept.id && deptEmps.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-white/[0.04] space-y-2">
                       <p className="text-xs font-medium uppercase tracking-wider text-white/40 text-right">أعضاء الفريق</p>
-                      {deptEmps.map((emp) => <div key={emp.id} className="flex items-center gap-2 text-sm text-white/70"><div className="w-5 h-5 rounded-full bg-[#4A2C3F]/30 flex items-center justify-center text-[10px] text-white">{emp.fullName.charAt(0)}</div>{emp.fullName}<span className="text-white/30 text-xs mr-auto">{emp.jobTitle}</span></div>)}
+                      {deptEmps.map((emp) => <div key={emp.id} className="flex items-center gap-2 text-sm text-white/70"><div className="w-5 h-5 rounded-full bg-[#4A2C3F]/30 flex items-center justify-center text-[10px] text-white">{(emp.fullName || "").charAt(0)}</div>{emp.fullName}<span className="text-white/30 text-xs mr-auto">{emp.jobTitle}</span></div>)}
                     </div>
                   )}
                 </CardContent>

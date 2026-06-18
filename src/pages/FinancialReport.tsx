@@ -20,18 +20,18 @@ export default function FinancialReport() {
     const monthPayroll = payroll.filter((p) => p.month === selectedMonth);
     const totalSalaries = monthPayroll.reduce((sum, p) => sum + Number(p.netPay), 0);
 
-    const monthBonuses = bonuses.filter((b) => b.date.startsWith(selectedMonth));
+    const monthBonuses = bonuses.filter((b) => (b.date instanceof Date ? b.date.toISOString() : String(b.date || "")).startsWith(selectedMonth));
     const totalBonusPaid = monthBonuses.filter((b) => b.type === "bonus").reduce((sum, b) => sum + Number(b.amount), 0);
     const totalPenaltyDeducted = monthBonuses.filter((b) => b.type === "penalty").reduce((sum, b) => sum + Number(b.amount), 0);
 
-    const monthAdvances = advances.filter((a) => a.date.startsWith(selectedMonth) && a.status === "approved");
+    const monthAdvances = advances.filter((a) => (a.date instanceof Date ? a.date.toISOString() : String(a.date || "")).startsWith(selectedMonth) && a.status === "approved");
     const totalAdvancesPaid = monthAdvances.reduce((sum, a) => sum + Number(a.amount), 0);
 
     // Inventory value
     const inventoryValue = inventory.reduce((sum, item) => sum + item.quantity * Number(item.unitPrice), 0);
 
     // Production revenue (estimated: $10 per garment)
-    const monthProduction = dailyProd.filter((d) => d.date.startsWith(selectedMonth));
+    const monthProduction = dailyProd.filter((d) => (d.date instanceof Date ? d.date.toISOString() : String(d.date || "")).startsWith(selectedMonth));
     const totalProduced = monthProduction.reduce((sum, d) => sum + d.produced, 0);
     const estimatedRevenue = totalProduced * 150; // 150 EGP per garment average
 

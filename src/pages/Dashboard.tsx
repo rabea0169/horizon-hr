@@ -229,7 +229,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {upcomingReviews.length === 0 ? <p className="text-sm text-white/40 text-center py-4">لا توجد تقييمات معلقة</p> : upcomingReviews.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0">
-                    <div className="w-8 h-8 rounded-full bg-[#4A2C3F]/30 flex items-center justify-center text-xs font-medium text-white">{r.employeeName.charAt(0)}</div>
+                    <div className="w-8 h-8 rounded-full bg-[#4A2C3F]/30 flex items-center justify-center text-xs font-medium text-white">{(r.employeeName || "").charAt(0)}</div>
                     <div className="flex-1 min-w-0 text-right"><p className="text-sm text-white/80">{r.employeeName}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>المراجع: {r.reviewerName}</p></div>
                     <span className="text-xs text-[#E85D4A] whitespace-nowrap">{r.period}</span>
                   </div>

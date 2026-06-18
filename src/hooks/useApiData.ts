@@ -753,11 +753,83 @@ export function useSupplyOrders() {
 //  CUTTING ORDERS
 // ═══════════════════════════════════════════════════════════════════
 export function useCuttingOrders() {
+  const utils = trpc.cuttingOrder.list.useUtils();
+  const { data } = trpc.cuttingOrder.list.useQuery();
+  const createMut = trpc.cuttingOrder.create.useMutation();
+  const updateMut = trpc.cuttingOrder.update.useMutation();
+  const deleteMut = trpc.cuttingOrder.delete.useMutation();
+
+  const create = useCallback(
+    async (order: Omit<CuttingOrder, "id">) => {
+      const result = await createMut.mutateAsync({
+        orderNumber: order.orderCode,
+        modelId: order.modelId ?? 0,
+        fabricDescription: order.fabricName,
+        color: order.color,
+        size: order.size,
+        quantity: order.totalPieces,
+      });
+      utils.invalidate();
+      return {
+        id: result.id,
+        orderCode: result.orderNumber,
+        modelId: result.modelId,
+        modelName: result.model?.name,
+        fabricName: result.fabricDescription,
+        color: result.color,
+        size: result.size,
+        totalPieces: result.quantity,
+        status: result.status,
+        date: result.createdAt ? new Date(result.createdAt).toISOString().split("T")[0] : "",
+        stages: []
+      } as unknown as CuttingOrder;
+    },
+    [createMut, utils]
+  );
+
+  const update = useCallback(
+    async (id: number, changes: Partial<CuttingOrder>) => {
+      await updateMut.mutateAsync({
+        id,
+        status: changes.status as any,
+        cutQuantity: changes.goodPieces
+      });
+      utils.invalidate();
+    },
+    [updateMut, utils]
+  );
+
+  const remove = useCallback(
+    async (id: number) => {
+      await deleteMut.mutateAsync({ id });
+      utils.invalidate();
+    },
+    [deleteMut, utils]
+  );
+
+  const mappedData = (data ?? []).map(r => ({
+    id: r.id,
+    orderCode: r.orderNumber,
+    modelId: r.modelId,
+    modelName: r.model?.name,
+    fabricName: r.fabricDescription ?? "",
+    color: r.color ?? "",
+    size: r.size ?? "",
+    totalPieces: r.quantity,
+    goodPieces: r.cutQuantity ?? 0,
+    defectedPieces: 0,
+    status: r.status,
+    date: r.createdAt ? new Date(r.createdAt).toISOString().split("T")[0] : "",
+    stages: []
+  }));
+
   return {
-    data: [] as CuttingOrder[],
+    data: mappedData as unknown as CuttingOrder[],
     save: () => {},
-    create: () => Promise.resolve({} as CuttingOrder),
-    update: () => {},
+    create,
+    update,
+    remove,
+    toggleStage: () => {},
   };
 }
 
@@ -805,12 +877,50 @@ export function useCostRecords() {
 //  BOM RECORDS
 // ═══════════════════════════════════════════════════════════════════
 export function useBOMRecords() {
+  const utils = trpc.bom.list.useUtils();
+  const { data } = trpc.bom.list.useQuery();
+  const createMut = trpc.bom.create.useMutation();
+  const updateMut = trpc.bom.update.useMutation();
+  const deleteMut = trpc.bom.delete.useMutation();
+
+  const create = useCallback(
+    async (bom: Omit<BOMRecord, "id">) => {
+      const result = await createMut.mutateAsync({
+        modelId: bom.modelId,
+        items: bom.items
+      });
+      utils.invalidate();
+      return result as unknown as BOMRecord;
+    },
+    [createMut, utils]
+  );
+
+  const update = useCallback(
+    async (id: number, changes: Partial<BOMRecord>) => {
+      await updateMut.mutateAsync({
+        id,
+        modelId: changes.modelId ?? id,
+        items: changes.items ?? []
+      });
+      utils.invalidate();
+    },
+    [updateMut, utils]
+  );
+
+  const remove = useCallback(
+    async (id: number) => {
+      await deleteMut.mutateAsync({ id });
+      utils.invalidate();
+    },
+    [deleteMut, utils]
+  );
+
   return {
-    data: [] as BOMRecord[],
+    data: (data ?? []) as BOMRecord[],
     save: () => {},
-    create: () => Promise.resolve({} as BOMRecord),
-    update: () => {},
-    remove: () => {},
+    create,
+    update,
+    remove,
   };
 }
 
@@ -853,19 +963,52 @@ export function useWorkOrders() {
   const { data } = trpc.workOrder.list.useQuery();
   const createMut = trpc.workOrder.create.useMutation();
   const updateMut = trpc.workOrder.update.useMutation();
+  const deleteMut = trpc.workOrder.delete.useMutation();
+  const toggleStageMut = trpc.workOrder.toggleStage.useMutation();
 
   const create = useCallback(
-    (order: Omit<WorkOrder, "id">) => {
-      return createMut.mutateAsync(order);
+    async (order: Omit<WorkOrder, "id">) => {
+      const result = await createMut.mutateAsync({
+        orderNumber: order.orderCode,
+        modelId: order.modelId ?? 0,
+        productionOrderId: order.productionOrderId,
+        lineId: order.lineId,
+        quantity: order.quantity,
+        priority: order.priority,
+        startDate: order.startDate,
+      });
+      utils.invalidate();
+      return result as unknown as WorkOrder;
     },
-    [createMut]
+    [createMut, utils]
   );
 
   const update = useCallback(
-    (id: number, changes: Partial<WorkOrder>) => {
-      updateMut.mutate({ id, ...changes });
+    async (id: number, changes: Partial<WorkOrder>) => {
+      await updateMut.mutateAsync({
+        id,
+        status: changes.status,
+        completed: changes.completed,
+      });
+      utils.invalidate();
     },
-    [updateMut]
+    [updateMut, utils]
+  );
+
+  const remove = useCallback(
+    async (id: number) => {
+      await deleteMut.mutateAsync({ id });
+      utils.invalidate();
+    },
+    [deleteMut, utils]
+  );
+
+  const toggleStage = useCallback(
+    async (workOrderId: number, stageId: number) => {
+      await toggleStageMut.mutateAsync({ workOrderId, stageId });
+      utils.invalidate();
+    },
+    [toggleStageMut, utils]
   );
 
   return {
@@ -873,6 +1016,8 @@ export function useWorkOrders() {
     save: () => {},
     create,
     update,
+    remove,
+    toggleStage,
   };
 }
 
@@ -913,10 +1058,70 @@ export function useQCRecords() {
 export function useMRPRecords() {
   const utils = trpc.mrp.list.useUtils();
   const { data } = trpc.mrp.list.useQuery();
+  const createMut = trpc.mrp.create.useMutation();
+  const updateMut = trpc.mrp.update.useMutation();
+  const deleteMut = trpc.mrp.delete.useMutation();
+
+  const create = useCallback(
+    async (rec: Omit<MRPRecord, "id">) => {
+      const result = await createMut.mutateAsync({
+        productionOrderId: Number(rec.productionOrders?.[0]) || undefined,
+        materialName: rec.materialName,
+        category: rec.category,
+        unit: rec.unit,
+        requiredQuantity: rec.requiredQty,
+        availableQuantity: rec.currentStock,
+        status: rec.status as any
+      });
+      utils.invalidate();
+      return result;
+    },
+    [createMut, utils]
+  );
+
+  const update = useCallback(
+    async (id: number, changes: Partial<MRPRecord>) => {
+      await updateMut.mutateAsync({
+        id,
+        materialName: changes.materialName,
+        category: changes.category,
+        unit: changes.unit,
+        availableQuantity: changes.currentStock,
+        requiredQuantity: changes.requiredQty,
+        status: changes.status as any
+      });
+      utils.invalidate();
+    },
+    [updateMut, utils]
+  );
+
+  const remove = useCallback(
+    async (id: number) => {
+      await deleteMut.mutateAsync({ id });
+      utils.invalidate();
+    },
+    [deleteMut, utils]
+  );
+
+  const mappedData = (data ?? []).map((r: any) => ({
+    id: r.id,
+    materialName: r.item?.name ?? "Unknown",
+    category: r.item?.category ?? "other",
+    currentStock: r.availableQuantity ?? r.item?.quantity ?? 0,
+    minLevel: r.item?.minStock ?? 0,
+    requiredQty: r.requiredQuantity ?? 0,
+    unit: r.item?.unit ?? "قطعة",
+    productionOrders: r.productionOrderId ? [String(r.productionOrderId)] : [],
+    status: r.status ?? "planned",
+    lastUpdated: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString()
+  }));
 
   return {
-    data: (data ?? []) as MRPRecord[],
+    data: mappedData as unknown as MRPRecord[],
     save: () => {},
+    create,
+    update,
+    remove,
   };
 }
 

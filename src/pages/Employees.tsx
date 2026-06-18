@@ -90,7 +90,7 @@ export default function Employees() {
               {paged.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-12 text-white/40"><Users size={32} className="mx-auto mb-3 opacity-50" /><p>لا يوجد موظفين</p></TableCell></TableRow>
                 : paged.map((emp) => (
                   <TableRow key={emp.id} className="border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                    <TableCell><div className="flex items-center gap-3"><Avatar className="w-8 h-8"><AvatarFallback className="bg-[#4A2C3F] text-white text-xs">{emp.fullName.charAt(0)}</AvatarFallback></Avatar><div className="text-right"><p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{emp.fullName}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>{emp.employeeCode}</p></div></div></TableCell>
+                    <TableCell><div className="flex items-center gap-3"><Avatar className="w-8 h-8"><AvatarFallback className="bg-[#4A2C3F] text-white text-xs">{(emp.fullName || "").charAt(0)}</AvatarFallback></Avatar><div className="text-right"><p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{emp.fullName}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>{emp.employeeCode}</p></div></div></TableCell>
                     <TableCell className="text-sm" style={{ color: "var(--text-secondary)" }}>{departments.find((d) => d.id === emp.departmentId)?.name || "—"}</TableCell>
                     <TableCell className="text-sm" style={{ color: "var(--text-secondary)" }}>{emp.jobTitle}</TableCell>
                     <TableCell><Badge variant="outline" className={statusStyles[emp.status]}>{statusLabels[emp.status]}</Badge></TableCell>

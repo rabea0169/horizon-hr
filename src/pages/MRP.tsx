@@ -10,6 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, AlertTriangle, CheckCircle2, Package } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  planned: { label: "مخطط له", color: "bg-blue-500/15 text-blue-400", icon: Package },
+  ordered: { label: "مطلوب", color: "bg-yellow-500/15 text-yellow-400", icon: AlertTriangle },
+  available: { label: "متوفر", color: "bg-emerald-500/15 text-emerald-400", icon: CheckCircle2 },
+  shortage: { label: "عجز", color: "bg-red-500/15 text-red-400", icon: AlertTriangle },
+  // التوافقية
   sufficient: { label: "كافي", color: "bg-emerald-500/15 text-emerald-400", icon: CheckCircle2 },
   low: { label: "منخفض", color: "bg-yellow-500/15 text-yellow-400", icon: AlertTriangle },
   critical: { label: "حرج", color: "bg-red-500/15 text-red-400", icon: AlertTriangle },
@@ -64,7 +69,7 @@ export default function MRP() {
               </TableHeader>
               <TableBody>
                 {filtered.map((r) => {
-                  const s = statusConfig[r.status];
+                  const s = statusConfig[r.status] || { label: r.status || "", color: "bg-gray-500/15 text-gray-400", icon: Package };
                   const SI = s.icon;
                   return (
                     <TableRow key={r.id} style={{ borderColor: "var(--border-color)" }}>

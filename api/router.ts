@@ -19,7 +19,7 @@ import { goodsReceiptRouter } from "./goods-receipt-router";
 import { salesPipelineRouter } from "./sales-pipeline-router";
 import { salesCommissionRouter } from "./sales-commission-router";
 import { shippingRouter } from "./shipping-router";
-import { qcRouter, mrpRouter, challanRouter, subcontractRouter, bundleRouter, cuttingOrderRouter, workOrderRouter, shiftRouter } from "./operations-router";
+import { qcRouter, mrpRouter, challanRouter, subcontractRouter, bundleRouter, cuttingOrderRouter, workOrderRouter, shiftRouter, bomRouter } from "./operations-router";
 import { matrixRouter, fabricRollRouter, cutPlanRouter, markerPlanRouter, samRouter, lineBalancingRouter, warehouseRouter, warehouseBinRouter, reorderRuleRouter } from "./phase2-router";
 import { mobileRouter, biometricRouter, barcodeRouter, tenancyRouter } from "./phase3-router";
 import { plmRouter, reportBuilderRouter, analyticsRouter, employeePortalRouter, buyerPortalRouter, biIntegrationRouter } from "./phase4-router";
@@ -113,6 +113,7 @@ export const appRouter = createRouter({
   // Operations
   qc: qcRouter,
   mrp: mrpRouter,
+  bom: bomRouter,
   challan: challanRouter,
   subcontract: subcontractRouter,
   bundle: bundleRouter,

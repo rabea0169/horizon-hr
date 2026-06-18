@@ -129,7 +129,7 @@ export default function RealTimeProduction() {
   const liveLines: LiveLine[] = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
     return (lines ?? []).map((line: any) => {
-      const lineProd = (dailyProd ?? []).filter((d: any) => d.lineId === line.id && d.date?.startsWith?.(today));
+      const lineProd = (dailyProd ?? []).filter((d: any) => d.lineId === line.id && (d.date instanceof Date ? d.date.toISOString() : String(d.date || "")).startsWith(today));
       const producedToday = lineProd.reduce((s: number, d: any) => s + (d.produced || 0), 0);
       const defectedToday = lineProd.reduce((s: number, d: any) => s + (d.defected || 0), 0);
       const workersPresent = (attendance ?? []).filter((a: any) => a.status === "present" || a.status === "late").length;
