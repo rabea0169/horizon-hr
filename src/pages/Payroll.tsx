@@ -77,7 +77,7 @@ export default function Payroll() {
 
       {/* Print header */}
       <div className="print-only hidden text-center mb-4">
-        <h1 className="text-2xl font-bold text-black">مصنع Horizon للملابس الجاهزة</h1>
+        <h1 className="text-2xl font-bold text-black">مصنع سليم للملابس الجاهزة</h1>
         <p className="text-lg text-black">كشف رواتب - {selectedMonth}</p>
         <hr className="my-3 border-gray-300" />
       </div>

@@ -24,10 +24,10 @@ export interface PrintSettings {
 }
 
 const DEFAULT_SETTINGS: PrintSettings = {
-  companyName: "مصنع هورايزن للملابس الجاهزة",
+  companyName: "مصنع سليم للملابس الجاهزة",
   companyAddress: "المنطقة الصناعية الثالثة، العاشر من رمضان، مصر",
   companyPhone: "+20 15 1234 5678",
-  companyEmail: "info@horizon-garments.com",
+  companyEmail: "info@selim-garments.com",
   companyLogo: "",
   taxNumber: "123-456-789",
   commercialRegister: "56478",

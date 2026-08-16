@@ -11,6 +11,8 @@ import {
   date,
   boolean,
   index,
+  unique,
+  json,
 } from "drizzle-orm/mysql-core";
 
 // ═══════════════════════════════════════════════════════════════
@@ -39,7 +41,7 @@ export const departments = mysqlTable("departments", {
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
   color: varchar("color", { length: 7 }).default("#4A2C3F"),
-  managerId: bigint("managerId", { mode: "number", unsigned: true }),
+  managerId: bigint("managerId", { mode: "number", unsigned: true }).references((): any => employees.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -54,16 +56,17 @@ export const employees = mysqlTable("employees", {
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 30 }),
   avatar: text("avatar"),
-  departmentId: bigint("departmentId", { mode: "number", unsigned: true }),
+  departmentId: bigint("departmentId", { mode: "number", unsigned: true }).references(() => departments.id),
   role: varchar("role", { length: 100 }).notNull(),
   jobTitle: varchar("jobTitle", { length: 150 }).notNull(),
-  managerId: bigint("managerId", { mode: "number", unsigned: true }),
+  managerId: bigint("managerId", { mode: "number", unsigned: true }).references((): any => employees.id),
   joinDate: date("joinDate").notNull(),
   salary: decimal("salary", { precision: 12, scale: 2 }),
   status: mysqlEnum("status", ["active", "on_leave", "inactive", "terminated"]).default("active").notNull(),
   employmentType: mysqlEnum("employmentType", ["full_time", "part_time", "contract", "intern"]).default("full_time").notNull(),
   salaryType: mysqlEnum("salaryType", ["monthly", "piece_rate", "mixed"]).default("monthly").notNull(),
   passwordHash: varchar("passwordHash", { length: 255 }),
+  allowedModules: json("allowedModules").$type<string[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => ({
@@ -76,7 +79,7 @@ export type InsertEmployee = typeof employees.$inferInsert;
 // ─── 4. Attendance ───
 export const attendance = mysqlTable("attendance", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
   date: date("date").notNull(),
   checkIn: timestamp("checkIn"),
   checkOut: timestamp("checkOut"),
@@ -95,14 +98,14 @@ export type InsertAttendance = typeof attendance.$inferInsert;
 // ─── 5. Leave Requests ───
 export const leaves = mysqlTable("leaves", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
   leaveType: mysqlEnum("leaveType", ["annual", "sick", "maternity", "paternity", "unpaid", "emergency", "bereavement"]).default("annual").notNull(),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
   days: int("days").notNull(),
   reason: text("reason"),
   status: mysqlEnum("status", ["pending", "approved", "rejected", "cancelled"]).default("pending").notNull(),
-  approvedBy: bigint("approvedBy", { mode: "number", unsigned: true }),
+  approvedBy: bigint("approvedBy", { mode: "number", unsigned: true }).references(() => employees.id),
   approvedAt: timestamp("approvedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
@@ -115,8 +118,8 @@ export type InsertLeave = typeof leaves.$inferInsert;
 // ─── 6. Performance Reviews ───
 export const performanceReviews = mysqlTable("performance_reviews", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
-  reviewerId: bigint("reviewerId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
+  reviewerId: bigint("reviewerId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
   period: varchar("period", { length: 20 }).notNull(),
   status: mysqlEnum("status", ["pending", "in_progress", "completed"]).default("pending").notNull(),
   overallRating: int("overallRating"),
@@ -136,14 +139,14 @@ export type InsertPerformanceReview = typeof performanceReviews.$inferInsert;
 export const jobPostings = mysqlTable("job_postings", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
-  departmentId: bigint("departmentId", { mode: "number", unsigned: true }),
+  departmentId: bigint("departmentId", { mode: "number", unsigned: true }).references(() => departments.id),
   description: text("description"),
   requirements: text("requirements"),
   salaryRange: varchar("salaryRange", { length: 100 }),
   location: varchar("location", { length: 100 }),
   employmentType: mysqlEnum("employmentType", ["full_time", "part_time", "contract", "intern"]).default("full_time").notNull(),
   status: mysqlEnum("status", ["open", "paused", "closed"]).default("open").notNull(),
-  postedBy: bigint("postedBy", { mode: "number", unsigned: true }),
+  postedBy: bigint("postedBy", { mode: "number", unsigned: true }).references(() => employees.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -153,7 +156,7 @@ export type InsertJobPosting = typeof jobPostings.$inferInsert;
 // ─── 8. Candidates ───
 export const candidates = mysqlTable("candidates", {
   id: serial("id").primaryKey(),
-  jobPostingId: bigint("jobPostingId", { mode: "number", unsigned: true }).notNull(),
+  jobPostingId: bigint("jobPostingId", { mode: "number", unsigned: true }).notNull().references(() => jobPostings.id),
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 30 }),
@@ -170,7 +173,7 @@ export type InsertCandidate = typeof candidates.$inferInsert;
 // ─── 9. Payroll Records ───
 export const payrollRecords = mysqlTable("payroll_records", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
   month: varchar("month", { length: 7 }).notNull(),
   basicSalary: decimal("basicSalary", { precision: 12, scale: 2 }).notNull(),
   bonus: decimal("bonus", { precision: 12, scale: 2 }).default("0"),
@@ -203,8 +206,8 @@ export type InsertShift = typeof shifts.$inferInsert;
 // ─── 11. Shift Assignments ───
 export const shiftAssignments = mysqlTable("shift_assignments", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
-  shiftId: bigint("shiftId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
+  shiftId: bigint("shiftId", { mode: "number", unsigned: true }).notNull().references(() => shifts.id),
   startDate: date("startDate").notNull(),
   endDate: date("endDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -215,11 +218,11 @@ export type InsertShiftAssignment = typeof shiftAssignments.$inferInsert;
 // ─── 12. Advances ───
 export const advances = mysqlTable("advances", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   reason: text("reason"),
   status: mysqlEnum("status", ["pending", "approved", "rejected", "repaid"]).default("pending").notNull(),
-  approvedBy: bigint("approvedBy", { mode: "number", unsigned: true }),
+  approvedBy: bigint("approvedBy", { mode: "number", unsigned: true }).references(() => employees.id),
   approvedAt: timestamp("approvedAt"),
   repaymentAmount: decimal("repaymentAmount", { precision: 12, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -230,13 +233,13 @@ export type InsertAdvance = typeof advances.$inferInsert;
 // ─── 13. Bonuses & Penalties ───
 export const bonusPenalties = mysqlTable("bonus_penalties", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
   type: mysqlEnum("type", ["bonus", "penalty"]).notNull(),
   category: varchar("category", { length: 50 }).notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   reason: text("reason"),
   month: varchar("month", { length: 7 }).notNull(),
-  appliedBy: bigint("appliedBy", { mode: "number", unsigned: true }),
+  appliedBy: bigint("appliedBy", { mode: "number", unsigned: true }).references(() => employees.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type BonusPenalty = typeof bonusPenalties.$inferSelect;
@@ -247,7 +250,7 @@ export const productionLines = mysqlTable("production_lines", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 150 }).notNull(),
   lineType: mysqlEnum("lineType", ["sewing", "cutting", "ironing", "packing", "finishing"]).default("sewing").notNull(),
-  supervisorId: bigint("supervisorId", { mode: "number", unsigned: true }),
+  supervisorId: bigint("supervisorId", { mode: "number", unsigned: true }).references(() => employees.id),
   capacity: int("capacity").default(0),
   status: mysqlEnum("status", ["active", "inactive", "maintenance"]).default("active").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -265,7 +268,7 @@ export const productionOrders = mysqlTable("production_orders", {
   quantity: int("quantity").notNull(),
   completed: int("completed").default(0),
   defected: int("defected").default(0),
-  lineId: bigint("lineId", { mode: "number", unsigned: true }),
+  lineId: bigint("lineId", { mode: "number", unsigned: true }).references(() => productionLines.id),
   status: mysqlEnum("status", ["pending", "in_progress", "completed", "cancelled"]).default("pending").notNull(),
   startDate: date("startDate"),
   endDate: date("endDate"),
@@ -282,8 +285,8 @@ export type InsertProductionOrder = typeof productionOrders.$inferInsert;
 // ─── 16. Daily Production ───
 export const dailyProduction = mysqlTable("daily_production", {
   id: serial("id").primaryKey(),
-  lineId: bigint("lineId", { mode: "number", unsigned: true }).notNull(),
-  orderId: bigint("orderId", { mode: "number", unsigned: true }),
+  lineId: bigint("lineId", { mode: "number", unsigned: true }).notNull().references(() => productionLines.id),
+  orderId: bigint("orderId", { mode: "number", unsigned: true }).references(() => productionOrders.id),
   date: date("date").notNull(),
   produced: int("produced").default(0),
   defected: int("defected").default(0),
@@ -317,7 +320,7 @@ export type InsertProductionModel = typeof productionModels.$inferInsert;
 // ─── 18. Model Stages ───
 export const modelStages = mysqlTable("model_stages", {
   id: serial("id").primaryKey(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
   name: varchar("name", { length: 100 }).notNull(),
   sequence: int("sequence").notNull(),
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).default("0"),
@@ -330,16 +333,19 @@ export type InsertModelStage = typeof modelStages.$inferInsert;
 // ─── 19. Piece Rate Records ───
 export const pieceRateRecords = mysqlTable("piece_rate_records", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
-  stageId: bigint("stageId", { mode: "number", unsigned: true }),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
+  stageId: bigint("stageId", { mode: "number", unsigned: true }).references(() => modelStages.id),
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
   totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
   date: date("date").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  empIdx: index("idx_piece_rate_employee_id").on(table.employeeId),
+  modelIdx: index("idx_piece_rate_model_id").on(table.modelId),
+}));
 export type PieceRateRecord = typeof pieceRateRecords.$inferSelect;
 export type InsertPieceRateRecord = typeof pieceRateRecords.$inferInsert;
 
@@ -352,7 +358,7 @@ export const machines = mysqlTable("machines", {
   brand: varchar("brand", { length: 100 }),
   model: varchar("model", { length: 100 }),
   serialNumber: varchar("serialNumber", { length: 100 }),
-  lineId: bigint("lineId", { mode: "number", unsigned: true }),
+  lineId: bigint("lineId", { mode: "number", unsigned: true }).references(() => productionLines.id),
   purchaseDate: date("purchaseDate"),
   cost: decimal("cost", { precision: 12, scale: 2 }),
   status: mysqlEnum("status", ["operational", "maintenance", "broken", "idle"]).default("operational").notNull(),
@@ -386,13 +392,13 @@ export type InsertInventoryItem = typeof inventoryItems.$inferInsert;
 // ─── 22. Inventory Transactions ───
 export const inventoryTransactions = mysqlTable("inventory_transactions", {
   id: serial("id").primaryKey(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   type: mysqlEnum("type", ["in", "out", "adjustment", "transfer"]).notNull(),
   quantity: int("quantity").notNull(),
   referenceType: varchar("referenceType", { length: 50 }),
   referenceId: bigint("referenceId", { mode: "number", unsigned: true }),
   notes: text("notes"),
-  createdBy: bigint("createdBy", { mode: "number", unsigned: true }),
+  createdBy: bigint("createdBy", { mode: "number", unsigned: true }).references(() => employees.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   itemIdx: index("idx_inv_tx_item_id").on(table.itemId),
@@ -423,7 +429,7 @@ export type InsertSupplier = typeof suppliers.$inferInsert;
 export const supplyOrders = mysqlTable("supply_orders", {
   id: serial("id").primaryKey(),
   orderNumber: varchar("orderNumber", { length: 50 }).notNull().unique(),
-  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull(),
+  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull().references(() => suppliers.id),
   status: mysqlEnum("status", ["draft", "sent", "partial", "received", "cancelled"]).default("draft").notNull(),
   totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }),
   expectedDate: date("expectedDate"),
@@ -438,8 +444,8 @@ export type InsertSupplyOrder = typeof supplyOrders.$inferInsert;
 // ─── 25. Supply Order Items ───
 export const supplyOrderItems = mysqlTable("supply_order_items", {
   id: serial("id").primaryKey(),
-  supplyOrderId: bigint("supplyOrderId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  supplyOrderId: bigint("supplyOrderId", { mode: "number", unsigned: true }).notNull().references(() => supplyOrders.id),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
   receivedQuantity: int("receivedQuantity").default(0),
@@ -452,14 +458,14 @@ export type InsertSupplyOrderItem = typeof supplyOrderItems.$inferInsert;
 export const cuttingOrders = mysqlTable("cutting_orders", {
   id: serial("id").primaryKey(),
   orderNumber: varchar("orderNumber", { length: 50 }).notNull().unique(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
   fabricDescription: text("fabricDescription"),
   color: varchar("color", { length: 100 }),
   size: varchar("size", { length: 50 }),
   quantity: int("quantity").notNull(),
   cutQuantity: int("cutQuantity").default(0),
   status: mysqlEnum("status", ["pending", "cutting", "completed", "cancelled"]).default("pending").notNull(),
-  assignedTo: bigint("assignedTo", { mode: "number", unsigned: true }),
+  assignedTo: bigint("assignedTo", { mode: "number", unsigned: true }).references(() => employees.id),
   dueDate: date("dueDate"),
   completedDate: date("completedDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -471,9 +477,9 @@ export type InsertCuttingOrder = typeof cuttingOrders.$inferInsert;
 export const workOrders = mysqlTable("work_orders", {
   id: serial("id").primaryKey(),
   orderNumber: varchar("orderNumber", { length: 50 }).notNull().unique(),
-  productionOrderId: bigint("productionOrderId", { mode: "number", unsigned: true }),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
-  lineId: bigint("lineId", { mode: "number", unsigned: true }),
+  productionOrderId: bigint("productionOrderId", { mode: "number", unsigned: true }).references(() => productionOrders.id),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
+  lineId: bigint("lineId", { mode: "number", unsigned: true }).references(() => productionLines.id),
   quantity: int("quantity").notNull(),
   completed: int("completed").default(0),
   status: mysqlEnum("status", ["pending", "in_progress", "completed", "cancelled"]).default("pending").notNull(),
@@ -492,13 +498,13 @@ export const bundles = mysqlTable("bundles", {
   id: serial("id").primaryKey(),
   bundleCode: varchar("bundleCode", { length: 100 }).notNull().unique(),
   qrCode: text("qrCode"),
-  workOrderId: bigint("workOrderId", { mode: "number", unsigned: true }),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
+  workOrderId: bigint("workOrderId", { mode: "number", unsigned: true }).references(() => workOrders.id),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
   size: varchar("size", { length: 20 }),
   color: varchar("color", { length: 50 }),
   quantity: int("quantity").notNull(),
   currentStage: varchar("currentStage", { length: 100 }),
-  currentLineId: bigint("currentLineId", { mode: "number", unsigned: true }),
+  currentLineId: bigint("currentLineId", { mode: "number", unsigned: true }).references(() => productionLines.id),
   status: mysqlEnum("status", ["cutting", "sewing", "ironing", "qc", "packed", "shipped"]).default("cutting").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
@@ -512,21 +518,25 @@ export type InsertBundle = typeof bundles.$inferInsert;
 // ─── 29. Bundle Tracking ───
 export const bundleTracking = mysqlTable("bundle_tracking", {
   id: serial("id").primaryKey(),
-  bundleId: bigint("bundleId", { mode: "number", unsigned: true }).notNull(),
+  bundleId: bigint("bundleId", { mode: "number", unsigned: true }).notNull().references(() => bundles.id),
   stage: varchar("stage", { length: 100 }).notNull(),
-  lineId: bigint("lineId", { mode: "number", unsigned: true }),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }),
+  lineId: bigint("lineId", { mode: "number", unsigned: true }).references(() => productionLines.id),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).references(() => employees.id),
   scannedAt: timestamp("scannedAt").defaultNow().notNull(),
   notes: text("notes"),
-});
+}, (table) => ({
+  bundleIdx: index("idx_bundle_tracking_bundle_id").on(table.bundleId),
+  lineIdx: index("idx_bundle_tracking_line_id").on(table.lineId),
+  empIdx: index("idx_bundle_tracking_employee_id").on(table.employeeId),
+}));
 export type BundleTracking = typeof bundleTracking.$inferSelect;
 export type InsertBundleTracking = typeof bundleTracking.$inferInsert;
 
 // ─── 30. BOM Records ───
 export const bomRecords = mysqlTable("bom_records", {
   id: serial("id").primaryKey(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
   wastagePercent: decimal("wastagePercent", { precision: 5, scale: 2 }).default("5"),
   unit: varchar("unit", { length: 20 }).notNull(),
@@ -539,14 +549,14 @@ export type InsertBOMRecord = typeof bomRecords.$inferInsert;
 // ─── 31. QC Records ───
 export const qcRecords = mysqlTable("qc_records", {
   id: serial("id").primaryKey(),
-  orderId: bigint("orderId", { mode: "number", unsigned: true }),
-  bundleId: bigint("bundleId", { mode: "number", unsigned: true }),
+  orderId: bigint("orderId", { mode: "number", unsigned: true }).references(() => productionOrders.id),
+  bundleId: bigint("bundleId", { mode: "number", unsigned: true }).references(() => bundles.id),
   stage: mysqlEnum("stage", ["inline", "input", "output", "final", "packing"]).notNull(),
   checkedQuantity: int("checkedQuantity").notNull(),
   passedQuantity: int("passedQuantity").default(0),
   defectedQuantity: int("defectedQuantity").default(0),
   defects: text("defects"),
-  inspectedBy: bigint("inspectedBy", { mode: "number", unsigned: true }),
+  inspectedBy: bigint("inspectedBy", { mode: "number", unsigned: true }).references(() => employees.id),
   date: date("date").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -556,8 +566,8 @@ export type InsertQCRecord = typeof qcRecords.$inferInsert;
 // ─── 32. MRP Records ───
 export const mrpRecords = mysqlTable("mrp_records", {
   id: serial("id").primaryKey(),
-  productionOrderId: bigint("productionOrderId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  productionOrderId: bigint("productionOrderId", { mode: "number", unsigned: true }).notNull().references(() => productionOrders.id),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   requiredQuantity: int("requiredQuantity").notNull(),
   availableQuantity: int("availableQuantity").default(0),
   shortage: int("shortage").default(0),
@@ -573,7 +583,7 @@ export const challans = mysqlTable("challans", {
   challanNumber: varchar("challanNumber", { length: 50 }).notNull().unique(),
   type: mysqlEnum("type", ["dispatch", "return"]).default("dispatch").notNull(),
   customerName: varchar("customerName", { length: 200 }),
-  orderId: bigint("orderId", { mode: "number", unsigned: true }),
+  orderId: bigint("orderId", { mode: "number", unsigned: true }).references(() => productionOrders.id),
   totalItems: int("totalItems").default(0),
   status: mysqlEnum("status", ["draft", "ready", "shipped", "delivered", "returned"]).default("draft").notNull(),
   vehicleNumber: varchar("vehicleNumber", { length: 50 }),
@@ -589,8 +599,8 @@ export type InsertChallan = typeof challans.$inferInsert;
 // ─── 34. Challan Items ───
 export const challanItems = mysqlTable("challan_items", {
   id: serial("id").primaryKey(),
-  challanId: bigint("challanId", { mode: "number", unsigned: true }).notNull(),
-  bundleId: bigint("bundleId", { mode: "number", unsigned: true }),
+  challanId: bigint("challanId", { mode: "number", unsigned: true }).notNull().references(() => challans.id),
+  bundleId: bigint("bundleId", { mode: "number", unsigned: true }).references(() => bundles.id),
   description: varchar("description", { length: 200 }),
   quantity: int("quantity").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -602,8 +612,8 @@ export type InsertChallanItem = typeof challanItems.$inferInsert;
 export const subcontracts = mysqlTable("subcontracts", {
   id: serial("id").primaryKey(),
   contractNumber: varchar("contractNumber", { length: 50 }).notNull().unique(),
-  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }),
+  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull().references(() => suppliers.id),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).references(() => productionModels.id),
   description: text("description"),
   quantity: int("quantity").notNull(),
   receivedQuantity: int("receivedQuantity").default(0),
@@ -622,8 +632,8 @@ export type InsertSubcontract = typeof subcontracts.$inferInsert;
 export const salesOrders = mysqlTable("sales_orders", {
   id: serial("id").primaryKey(),
   orderNumber: varchar("orderNumber", { length: 50 }).notNull().unique(),
-  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }),
+  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull().references(() => crmCustomers.id),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).references(() => productionModels.id),
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
   totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
@@ -663,12 +673,12 @@ export type InsertCRMCustomer = typeof crmCustomers.$inferInsert;
 // ─── 38. CRM Interactions ───
 export const crmInteractions = mysqlTable("crm_interactions", {
   id: serial("id").primaryKey(),
-  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull(),
+  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull().references(() => crmCustomers.id),
   type: mysqlEnum("type", ["call", "email", "meeting", "visit", "note"]).notNull(),
   subject: varchar("subject", { length: 200 }),
   content: text("content"),
   followUpDate: date("followUpDate"),
-  createdBy: bigint("createdBy", { mode: "number", unsigned: true }),
+  createdBy: bigint("createdBy", { mode: "number", unsigned: true }).references(() => employees.id),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type CRMInteraction = typeof crmInteractions.$inferSelect;
@@ -677,7 +687,7 @@ export type InsertCRMInteraction = typeof crmInteractions.$inferInsert;
 // ─── 39. Cost Calculations ───
 export const costCalculations = mysqlTable("cost_calculations", {
   id: serial("id").primaryKey(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull(),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).notNull().references(() => productionModels.id),
   fabricCost: decimal("fabricCost", { precision: 12, scale: 2 }).default("0"),
   laborCost: decimal("laborCost", { precision: 12, scale: 2 }).default("0"),
   overheadCost: decimal("overheadCost", { precision: 12, scale: 2 }).default("0"),
@@ -759,7 +769,10 @@ export const styleColorSizeMatrix = mysqlTable("style_color_size_matrix", {
   status: mysqlEnum("status", ["active", "inactive", "discontinued"]).default("active").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
-});
+}, (table) => ({
+  modelIdx: index("idx_style_matrix_model_id").on(table.modelId),
+  uqMatrix: unique("uq_style_matrix_color_size").on(table.modelId, table.styleCode, table.color, table.size),
+}));
 export type StyleColorSizeMatrix = typeof styleColorSizeMatrix.$inferSelect;
 export type InsertStyleColorSizeMatrix = typeof styleColorSizeMatrix.$inferInsert;
 
@@ -893,14 +906,14 @@ export type InsertWarehouse = typeof warehouses.$inferInsert;
 // ─── 50. Warehouse Bins ───
 export const warehouseBins = mysqlTable("warehouse_bins", {
   id: serial("id").primaryKey(),
-  warehouseId: bigint("warehouseId", { mode: "number", unsigned: true }).notNull(),
+  warehouseId: bigint("warehouseId", { mode: "number", unsigned: true }).notNull().references(() => warehouses.id),
   binCode: varchar("binCode", { length: 50 }).notNull(),
   aisle: varchar("aisle", { length: 20 }),
   rack: varchar("rack", { length: 20 }),
   shelf: varchar("shelf", { length: 20 }),
   capacity: int("capacity").default(0),
   currentQty: int("currentQty").default(0),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).references(() => inventoryItems.id),
   status: mysqlEnum("status", ["empty", "partial", "full", "reserved"]).default("empty").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -1136,8 +1149,8 @@ export type InsertPurchaseRequest = typeof purchaseRequests.$inferInsert;
 // ─── 63. Purchase Request Items ───
 export const purchaseRequestItems = mysqlTable("purchase_request_items", {
   id: serial("id").primaryKey(),
-  purchaseRequestId: bigint("purchaseRequestId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  purchaseRequestId: bigint("purchaseRequestId", { mode: "number", unsigned: true }).notNull().references(() => purchaseRequests.id),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   quantity: int("quantity").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1280,7 +1293,7 @@ export type InsertJournalVoucher = typeof journalVouchers.$inferInsert;
 // ─── 70. Journal Voucher Lines ───
 export const journalVoucherLines = mysqlTable("journal_voucher_lines", {
   id: serial("id").primaryKey(),
-  journalVoucherId: bigint("journalVoucherId", { mode: "number", unsigned: true }).notNull(),
+  journalVoucherId: bigint("journalVoucherId", { mode: "number", unsigned: true }).notNull().references(() => journalVouchers.id),
   accountCode: varchar("accountCode", { length: 50 }).notNull(),
   accountName: varchar("accountName", { length: 200 }).notNull(),
   debit: decimal("debit", { precision: 12, scale: 2 }).default("0"),
@@ -1381,8 +1394,8 @@ export type InsertQuotation = typeof quotations.$inferInsert;
 // ─── 76. Quotation Items ───
 export const quotationItems = mysqlTable("quotation_items", {
   id: serial("id").primaryKey(),
-  quotationId: bigint("quotationId", { mode: "number", unsigned: true }).notNull(),
-  modelId: bigint("modelId", { mode: "number", unsigned: true }),
+  quotationId: bigint("quotationId", { mode: "number", unsigned: true }).notNull().references(() => quotations.id),
+  modelId: bigint("modelId", { mode: "number", unsigned: true }).references(() => productionModels.id),
   description: varchar("description", { length: 255 }),
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
@@ -1831,7 +1844,7 @@ export type InsertFiscalYear = typeof fiscalYears.$inferInsert;
 export const purchaseOrders = mysqlTable("purchase_orders", {
   id: serial("id").primaryKey(),
   poNumber: varchar("poNumber", { length: 50 }).notNull().unique(),
-  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull(),
+  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull().references(() => suppliers.id),
   purchaseRequestId: bigint("purchaseRequestId", { mode: "number", unsigned: true }),
   quoteId: bigint("quoteId", { mode: "number", unsigned: true }),
   orderDate: date("orderDate").notNull(),
@@ -1856,8 +1869,8 @@ export type InsertPurchaseOrder = typeof purchaseOrders.$inferInsert;
 // ─── 94. Purchase Order Items ───
 export const purchaseOrderItems = mysqlTable("purchase_order_items", {
   id: serial("id").primaryKey(),
-  purchaseOrderId: bigint("purchaseOrderId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  purchaseOrderId: bigint("purchaseOrderId", { mode: "number", unsigned: true }).notNull().references(() => purchaseOrders.id),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull().default("0.00"),
   receivedQuantity: int("receivedQuantity").default(0),
@@ -1890,8 +1903,8 @@ export type InsertRFQ = typeof rfqs.$inferInsert;
 // ─── 96. RFQ Items ───
 export const rfqItems = mysqlTable("rfq_items", {
   id: serial("id").primaryKey(),
-  rfqId: bigint("rfqId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  rfqId: bigint("rfqId", { mode: "number", unsigned: true }).notNull().references(() => rfqs.id),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   quantity: int("quantity").notNull(),
   specifications: text("specifications"),
   notes: text("notes"),
@@ -1903,10 +1916,10 @@ export type InsertRFQItem = typeof rfqItems.$inferInsert;
 // ─── 97. RFQ Responses (Supplier Quotes) ───
 export const rfqResponses = mysqlTable("rfq_responses", {
   id: serial("id").primaryKey(),
-  rfqId: bigint("rfqId", { mode: "number", unsigned: true }).notNull(),
-  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull(),
-  unitPrice: varchar("unitPrice", { length: 50 }).notNull(),
-  totalPrice: varchar("totalPrice", { length: 50 }).notNull(),
+  rfqId: bigint("rfqId", { mode: "number", unsigned: true }).notNull().references(() => rfqs.id),
+  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull().references(() => suppliers.id),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  totalPrice: decimal("totalPrice", { precision: 12, scale: 2 }).notNull().default("0.00"),
   deliveryDays: int("deliveryDays"),
   validityDays: int("validityDays").default(30),
   currency: varchar("currency", { length: 3 }).default("EGP"),
@@ -1922,8 +1935,8 @@ export type InsertRFQResponse = typeof rfqResponses.$inferInsert;
 export const goodsReceipts = mysqlTable("goods_receipts", {
   id: serial("id").primaryKey(),
   grNumber: varchar("grNumber", { length: 50 }).notNull().unique(),
-  purchaseOrderId: bigint("purchaseOrderId", { mode: "number", unsigned: true }).notNull(),
-  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull(),
+  purchaseOrderId: bigint("purchaseOrderId", { mode: "number", unsigned: true }).notNull().references(() => purchaseOrders.id),
+  supplierId: bigint("supplierId", { mode: "number", unsigned: true }).notNull().references(() => suppliers.id),
   receiptDate: date("receiptDate").notNull(),
   invoiceNumber: varchar("invoiceNumber", { length: 50 }),
   subtotal: decimal("subtotal", { precision: 12, scale: 2 }),
@@ -1941,16 +1954,16 @@ export type InsertGoodsReceipt = typeof goodsReceipts.$inferInsert;
 // ─── 99. Goods Receipt Items ───
 export const goodsReceiptItems = mysqlTable("goods_receipt_items", {
   id: serial("id").primaryKey(),
-  goodsReceiptId: bigint("goodsReceiptId", { mode: "number", unsigned: true }).notNull(),
+  goodsReceiptId: bigint("goodsReceiptId", { mode: "number", unsigned: true }).notNull().references(() => goodsReceipts.id),
   purchaseOrderItemId: bigint("purchaseOrderItemId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   orderedQuantity: int("orderedQuantity").notNull(),
   receivedQuantity: int("receivedQuantity").notNull(),
   acceptedQuantity: int("acceptedQuantity").default(0),
   rejectedQuantity: int("rejectedQuantity").default(0),
   rejectionReason: text("rejectionReason"),
-  unitPrice: varchar("unitPrice", { length: 50 }),
-  total: varchar("total", { length: 50 }),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }),
+  total: decimal("total", { precision: 12, scale: 2 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -1974,8 +1987,8 @@ export type InsertSalesPipelineStage = typeof salesPipelineStages.$inferInsert;
 export const salesOpportunities = mysqlTable("sales_opportunities", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
-  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull(),
-  stageId: bigint("stageId", { mode: "number", unsigned: true }).notNull(),
+  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull().references(() => crmCustomers.id),
+  stageId: bigint("stageId", { mode: "number", unsigned: true }).notNull().references(() => salesPipelineStages.id),
   expectedValue: decimal("expectedValue", { precision: 12, scale: 2 }).notNull(),
   actualValue: decimal("actualValue", { precision: 12, scale: 2 }),
   probability: decimal("probability", { precision: 5, scale: 2 }).default("0"),
@@ -1995,12 +2008,12 @@ export type InsertSalesOpportunity = typeof salesOpportunities.$inferInsert;
 // ─── 102. Sales Commissions ───
 export const salesCommissions = mysqlTable("sales_commissions", {
   id: serial("id").primaryKey(),
-  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull(),
-  salesOrderId: bigint("salesOrderId", { mode: "number", unsigned: true }),
+  employeeId: bigint("employeeId", { mode: "number", unsigned: true }).notNull().references(() => employees.id),
+  salesOrderId: bigint("salesOrderId", { mode: "number", unsigned: true }).references(() => salesOrders.id),
   opportunityId: bigint("opportunityId", { mode: "number", unsigned: true }),
-  commissionRate: varchar("commissionRate", { length: 20 }).notNull(),
-  saleAmount: varchar("saleAmount", { length: 50 }).notNull(),
-  commissionAmount: varchar("commissionAmount", { length: 50 }).notNull(),
+  commissionRate: decimal("commissionRate", { precision: 5, scale: 2 }).notNull().default("0.00"),
+  saleAmount: decimal("saleAmount", { precision: 12, scale: 2 }).notNull().default("0.00"),
+  commissionAmount: decimal("commissionAmount", { precision: 12, scale: 2 }).notNull().default("0.00"),
   isPaid: boolean("isPaid").default(false).notNull(),
   paidAt: timestamp("paidAt"),
   period: varchar("period", { length: 10 }).notNull(),
@@ -2014,8 +2027,8 @@ export type InsertSalesCommission = typeof salesCommissions.$inferInsert;
 export const shipments = mysqlTable("shipments", {
   id: serial("id").primaryKey(),
   trackingNumber: varchar("trackingNumber", { length: 100 }).notNull().unique(),
-  salesOrderId: bigint("salesOrderId", { mode: "number", unsigned: true }).notNull(),
-  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull(),
+  salesOrderId: bigint("salesOrderId", { mode: "number", unsigned: true }).notNull().references(() => salesOrders.id),
+  customerId: bigint("customerId", { mode: "number", unsigned: true }).notNull().references(() => crmCustomers.id),
   carrier: varchar("carrier", { length: 100 }),
   shippingDate: date("shippingDate").notNull(),
   estimatedDeliveryDate: date("estimatedDeliveryDate"),
@@ -2037,9 +2050,9 @@ export type InsertShipment = typeof shipments.$inferInsert;
 // ─── 104. Shipment Items ───
 export const shipmentItems = mysqlTable("shipment_items", {
   id: serial("id").primaryKey(),
-  shipmentId: bigint("shipmentId", { mode: "number", unsigned: true }).notNull(),
+  shipmentId: bigint("shipmentId", { mode: "number", unsigned: true }).notNull().references(() => shipments.id),
   salesOrderItemId: bigint("salesOrderItemId", { mode: "number", unsigned: true }).notNull(),
-  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull(),
+  itemId: bigint("itemId", { mode: "number", unsigned: true }).notNull().references(() => inventoryItems.id),
   quantity: int("quantity").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

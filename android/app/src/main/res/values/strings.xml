@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">HorizonHR</string>
-    <string name="title_activity_main">HorizonHR</string>
-    <string name="package_name">com.horizonsolutions.hr</string>
-    <string name="custom_url_scheme">com.horizonsolutions.hr</string>
+    <string name="app_name">سليم HR</string>
+    <string name="title_activity_main">سليم HR</string>
+    <string name="package_name">com.selim.hr</string>
+    <string name="custom_url_scheme">com.selim.hr</string>
 </resources>

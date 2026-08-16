@@ -24,6 +24,7 @@ import { matrixRouter, fabricRollRouter, cutPlanRouter, markerPlanRouter, samRou
 import { mobileRouter, biometricRouter, barcodeRouter, tenancyRouter } from "./phase3-router";
 import { plmRouter, reportBuilderRouter, analyticsRouter, employeePortalRouter, buyerPortalRouter, biIntegrationRouter } from "./phase4-router";
 import { grnRouter } from "./grn-router";
+import { uploadRouter } from "./upload-router";
 
 import { voucherRouter } from "./voucher-router";
 import { leaveRouter as leaveApiRouter } from "./leave-router";
@@ -60,6 +61,7 @@ import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
+  upload: uploadRouter,
   auth: authRouter,
   dashboard: dashboardRouter,
   department: departmentRouter,
@@ -69,7 +71,6 @@ export const appRouter = createRouter({
   maintenance: maintenanceRouter,
   settings: settingsRouter,
   approval: approvalRouter,
-  notification: notificationApiRouter,
   lineRouter: lineRouter,
   quotation: quotationRouter,
   sam: samApiRouter,

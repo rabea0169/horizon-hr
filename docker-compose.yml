@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: horizon-hr-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_change_in_production
+      MYSQL_DATABASE: horizon_hr
+      MYSQL_USER: hr_user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: horizon-hr-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://hr_user:password@db:3306/horizon_hr
+      - APP_ID=horizon-hr-prod
+      - APP_SECRET=production_secret_key_change_me
+      - KIMI_AUTH_URL=https://auth.kimi.com
+      - KIMI_OPEN_URL=https://open.kimi.com
+      - HORIZON_JWT_SECRET=strong_production_jwt_secret_change_me
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:

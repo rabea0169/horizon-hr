@@ -22,6 +22,34 @@
       "when": 1781789100892,
       "tag": "0002_tidy_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1781964861926,
+      "tag": "0003_talented_silver_fox",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1782047253399,
+      "tag": "0004_fantastic_thunderbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1782565803575,
+      "tag": "0005_amusing_madrox",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1782565972681,
+      "tag": "0006_left_sphinx",
+      "breakpoints": true
     }
   ]
 }

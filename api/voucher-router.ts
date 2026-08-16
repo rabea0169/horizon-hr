@@ -5,9 +5,17 @@ import { paymentVouchers, receiptVouchers } from "@db/schema";
 import { desc } from "drizzle-orm";
 
 export const voucherRouter = createRouter({
-  listPayments: authedQuery.query(async () => {
-    return getDb().select().from(paymentVouchers).orderBy(desc(paymentVouchers.id)).limit(200);
-  }),
+  listPayments: authedQuery
+    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      const page = input?.page;
+      const pageSize = input?.pageSize;
+      const q = getDb().select().from(paymentVouchers).orderBy(desc(paymentVouchers.id));
+      if (page && pageSize) {
+        return q.limit(pageSize).offset((page - 1) * pageSize);
+      }
+      return q.limit(200);
+    }),
   createPayment: adminQuery
     .input(
       z.object({
@@ -32,9 +40,17 @@ export const voucherRouter = createRouter({
       const result = await getDb().insert(paymentVouchers).values(data).$returningId();
       return { id: result[0]?.id ?? 0, ...input };
     }),
-  listReceipts: authedQuery.query(async () => {
-    return getDb().select().from(receiptVouchers).orderBy(desc(receiptVouchers.id)).limit(200);
-  }),
+  listReceipts: authedQuery
+    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      const page = input?.page;
+      const pageSize = input?.pageSize;
+      const q = getDb().select().from(receiptVouchers).orderBy(desc(receiptVouchers.id));
+      if (page && pageSize) {
+        return q.limit(pageSize).offset((page - 1) * pageSize);
+      }
+      return q.limit(200);
+    }),
   createReceipt: adminQuery
     .input(
       z.object({

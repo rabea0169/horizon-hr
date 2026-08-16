@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRoles, type UserRole } from "@/hooks/useRoles";
+import type { UserRole } from "@/hooks/useRoles";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,6 @@ export default function Login() {
   const [error, setError] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("admin");
 
-  const { login: localLogin } = useRoles();
   const loginMut = trpc.auth.horizonLogin.useMutation({
     onSuccess: (data) => {
       if (data.success && data.token) {
@@ -53,13 +52,7 @@ export default function Login() {
       }
     },
     onError: () => {
-      const user = localLogin(username, password);
-      if (user) {
-        sessionStorage.setItem("hr_auth", "1");
-        window.location.reload();
-      } else {
-        setError(true);
-      }
+      setError(true);
     },
   });
 
@@ -81,31 +74,33 @@ const fillCredentials = (role: UserRole) => {
           <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: "var(--accent-color, #4A2C3F)" }}>
             <Factory size={32} style={{ color: "var(--text-primary)" }} />
           </div>
-          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary, #fff)" }}>مصنع Horizon</h1>
+          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary, #fff)" }}>مصنع سليم</h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-muted, rgba(255,255,255,0.5))" }}>نظام إدارة المصنع والعمال</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-6">
-          {(Object.keys(ROLE_LABELS) as UserRole[]).map((role) => {
-            const Icon = ROLE_ICONS[role];
-            const isSelected = selectedRole === role;
-            return (
-              <button
-                key={role}
-                onClick={() => fillCredentials(role)}
-                className={`flex items-center gap-2 p-3 rounded-xl border transition-all text-right ${ROLE_COLORS[role]} ${isSelected ? "ring-2 ring-offset-2 ring-offset-[var(--bg-primary)] scale-[1.02]" : "opacity-70 hover:opacity-100"}`}
-              >
-                <Icon size={18} />
-                <div>
-                  <p className="text-sm font-medium">{ROLE_LABELS[role]}</p>
-                  <p className="text-[10px] opacity-60">
-  {DEMO_CREDENTIALS[role].user} / {DEMO_CREDENTIALS[role].pass}
-</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {!import.meta.env.PROD && (
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            {(Object.keys(ROLE_LABELS) as UserRole[]).map((role) => {
+              const Icon = ROLE_ICONS[role];
+              const isSelected = selectedRole === role;
+              return (
+                <button
+                  key={role}
+                  onClick={() => fillCredentials(role)}
+                  className={`flex items-center gap-2 p-3 rounded-xl border transition-all text-right ${ROLE_COLORS[role]} ${isSelected ? "ring-2 ring-offset-2 ring-offset-[var(--bg-primary)] scale-[1.02]" : "opacity-70 hover:opacity-100"}`}
+                >
+                  <Icon size={18} />
+                  <div>
+                    <p className="text-sm font-medium">{ROLE_LABELS[role]}</p>
+                    <p className="text-[10px] opacity-60">
+    {DEMO_CREDENTIALS[role].user} / {DEMO_CREDENTIALS[role].pass}
+  </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="rounded-2xl p-6 border" style={{ background: "var(--bg-card, #1C1C1E)", borderColor: "var(--border-color, rgba(255,255,255,0.08))" }}>
           <div className="flex items-center gap-2 mb-4">

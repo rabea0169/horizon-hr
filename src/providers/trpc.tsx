@@ -12,6 +12,9 @@ const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error: any) => {
       console.error("[Query Cache Error]", error);
+      if (error?.message === "Authentication required") {
+        return;
+      }
       const msg = error?.message || "فشلت عملية جلب البيانات من الخادم";
       toast.error(`خطأ في جلب البيانات: ${msg}`);
     },

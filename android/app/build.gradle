@@ -8,10 +8,10 @@ configurations.all {
 }
 
 android {
-    namespace "com.horizonsolutions.hr"
+    namespace "com.selim.hr"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.horizonsolutions.hr"
+        applicationId "com.selim.hr"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

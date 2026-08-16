@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import { useEmployees, useAttendance } from "@/hooks/useLocalData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
-import { LogIn, LogOut, UserCheck, Clock, CheckCircle, AlertCircle, ScanLine, Keyboard } from "lucide-react";
+import { LogIn, LogOut, UserCheck, Clock, CheckCircle, AlertCircle, ScanLine, Keyboard, ArrowRight } from "lucide-react";
 
 export default function KioskPage() {
+  const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [mode, setMode] = useState<"scan" | "manual">("scan");
@@ -94,14 +96,24 @@ export default function KioskPage() {
   const presentCount = todayRecords.filter((a) => a.status === "present" || a.status === "late").length;
 
   return (
-    <div className="min-h-screen bg-[#0E0E0E] flex flex-col items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-[#0E0E0E] flex flex-col items-center justify-center p-4 relative" dir="rtl">
+      {/* Back Button */}
+      <Button 
+        variant="ghost" 
+        className="absolute top-4 right-4 text-white/50 hover:text-white hover:bg-white/10 no-print"
+        onClick={() => navigate("/")}
+      >
+        <ArrowRight size={20} className="ml-2" />
+        العودة للنظام
+      </Button>
+
       {/* Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-6 mt-8">
         <div className="w-16 h-16 rounded-2xl bg-[#4A2C3F] flex items-center justify-center mx-auto mb-4">
           <Clock size={32} style={{ color: "var(--text-primary)" }} />
         </div>
         <h1 className="text-2xl font-bold text-white">جهاز تسجيل الحضور</h1>
-        <p className="text-white/50 mt-1">مصنع Horizon للملابس الجاهزة</p>
+        <p className="text-white/50 mt-1">مصنع سليم للملابس الجاهزة</p>
         <p className="text-4xl font-mono text-white/80 mt-2">{timeStr}</p>
         <p className="text-sm text-white/40">{new Date().toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
       </div>

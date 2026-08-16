@@ -3,7 +3,7 @@
 //  مُعاد هيكلته وفق 14 موديول رئيسي من وثيقة المتطلبات
 // ============================================================
 
-import { lazy, type ComponentType } from "react";
+import { lazy, useState, useEffect, type ComponentType } from "react";
 
 // ─── 14 فئة رئيسية تتوافق مع وثيقة المتطلبات ───
 export type ModuleCategory =
@@ -36,81 +36,30 @@ export type AppModule = {
 // ─── lazy imports for all pages ───
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdvancedBI = lazy(() => import("./pages/AdvancedBI"));
-const Employees = lazy(() => import("./pages/Employees"));
-const Departments = lazy(() => import("./pages/Departments"));
-const Recruitment = lazy(() => import("./pages/Recruitment"));
-const Performance = lazy(() => import("./pages/Performance"));
-const Attendance = lazy(() => import("./pages/Attendance"));
-const Shifts = lazy(() => import("./pages/Shifts"));
-const ShiftReport = lazy(() => import("./pages/ShiftReport"));
-const Leaves = lazy(() => import("./pages/Leaves"));
 const Kiosk = lazy(() => import("./pages/Kiosk"));
-const Factory = lazy(() => import("./pages/Factory"));
-const ProductionModels = lazy(() => import("./pages/ProductionModels"));
-const Cutting = lazy(() => import("./pages/Cutting"));
-const WorkOrders = lazy(() => import("./pages/WorkOrders"));
-const QRTracking = lazy(() => import("./pages/QRTracking"));
-const BOM = lazy(() => import("./pages/BOM"));
 const Machines = lazy(() => import("./pages/Machines"));
-const QualityControl = lazy(() => import("./pages/QualityControl"));
-const MRP = lazy(() => import("./pages/MRP"));
-const Inventory = lazy(() => import("./pages/Inventory"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
-const Payroll = lazy(() => import("./pages/Payroll"));
-const PieceRate = lazy(() => import("./pages/PieceRate"));
-const CostCalculation = lazy(() => import("./pages/CostCalculation"));
-const FinancialReport = lazy(() => import("./pages/FinancialReport"));
-const Advances = lazy(() => import("./pages/Advances"));
-const BonusPenalties = lazy(() => import("./pages/BonusPenalties"));
-const SalesOrders = lazy(() => import("./pages/SalesOrders"));
-const CRM = lazy(() => import("./pages/CRM"));
-const SalesPipeline = lazy(() => import("./pages/SalesPipeline"));
-const SalesForecasting = lazy(() => import("./pages/SalesForecasting"));
-const SalesCommissions = lazy(() => import("./pages/SalesCommissions"));
-const PurchaseRequests = lazy(() => import("./pages/PurchaseRequests"));
-const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders"));
-const RFQ = lazy(() => import("./pages/RFQ"));
-const GoodsReceipt = lazy(() => import("./pages/GoodsReceipt"));
-const ShippingDelivery = lazy(() => import("./pages/ShippingDelivery"));
-const Dispatch = lazy(() => import("./pages/Dispatch"));
-const Subcontracting = lazy(() => import("./pages/Subcontracting"));
 const PrintSettings = lazy(() => import("./pages/PrintSettings"));
 const Settings = lazy(() => import("./pages/Settings"));
-const Quotation = lazy(() => import("./pages/Quotation"));
-const GRN = lazy(() => import("./pages/GRN"));
 const AuditLog = lazy(() => import("./pages/AuditLog"));
 const Maintenance = lazy(() => import("./pages/Maintenance"));
-const Invoices = lazy(() => import("./pages/Invoices"));
-const Vouchers = lazy(() => import("./pages/Vouchers"));
 const Reports = lazy(() => import("./pages/Reports"));
-const SAMCalculator = lazy(() => import("./pages/SAMCalculator"));
-const WorkerPortal = lazy(() => import("./pages/WorkerPortal"));
-const AQLCalculator = lazy(() => import("./pages/AQLCalculator"));
-const LineBalancing = lazy(() => import("./pages/LineBalancing"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const ExecutiveDashboard = lazy(() => import("./pages/ExecutiveDashboard"));
 const Approvals = lazy(() => import("./pages/Approvals"));
-const ZKTeco = lazy(() => import("./pages/ZKTeco"));
 const BackupRestore = lazy(() => import("./pages/BackupRestore"));
 const WhatsAppNotifications = lazy(() => import("./pages/WhatsAppNotifications"));
 const AIPredictions = lazy(() => import("./pages/AIPredictions"));
-const BarcodeGenerator = lazy(() => import("./pages/BarcodeGenerator"));
-const BarcodeScanner = lazy(() => import("./pages/BarcodeScanner"));
-const CADViewer = lazy(() => import("./pages/CADViewer"));
-const RealTimeProduction = lazy(() => import("./pages/RealTimeProduction"));
 const MobileApp = lazy(() => import("./pages/MobileApp"));
 const ServerSetup = lazy(() => import("./pages/ServerSetup"));
 const QATesting = lazy(() => import("./pages/QATesting"));
 const UserGuide = lazy(() => import("./pages/UserGuide"));
 const AdminGuide = lazy(() => import("./pages/AdminGuide"));
-const Expenses = lazy(() => import("./pages/Expenses"));
-const FinishedGoods = lazy(() => import("./pages/FinishedGoods"));
-const Wastage = lazy(() => import("./pages/Wastage"));
-const SalesRepApp = lazy(() => import("./pages/SalesRepApp"));
-const ChartOfAccounts = lazy(() => import("./pages/ChartOfAccounts"));
-const Treasury = lazy(() => import("./pages/Treasury"));
-const OpeningBalances = lazy(() => import("./pages/OpeningBalances"));
-const AgingCredit = lazy(() => import("./pages/AgingCredit"));
+
+const HRHub = lazy(() => import("./pages/hubs/HRHub"));
+const ProductionHub = lazy(() => import("./pages/hubs/ProductionHub"));
+const InventoryHub = lazy(() => import("./pages/hubs/InventoryHub"));
+const AccountingHub = lazy(() => import("./pages/hubs/AccountingHub"));
+const SalesHub = lazy(() => import("./pages/hubs/SalesHub"));
 
 // ─── Module Registry — 14 موديول رئيسي ───
 
@@ -149,7 +98,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "sales-orders",
     name: "أوامر البيع",
     path: "/sales-orders",
-    component: SalesOrders,
+    component: SalesHub,
     icon: "ShoppingCart",
     category: "merchandising",
     enabled: true,
@@ -160,7 +109,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "crm",
     name: "العملاء",
     path: "/crm",
-    component: CRM,
+    component: SalesHub,
     icon: "UserCheck",
     category: "merchandising",
     enabled: true,
@@ -171,7 +120,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "dispatch",
     name: "الصرف والتوصيل",
     path: "/dispatch",
-    component: Dispatch,
+    component: SalesHub,
     icon: "ScanBarcode",
     category: "merchandising",
     enabled: true,
@@ -182,7 +131,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "quotation",
     name: "عروض الأسعار",
     path: "/quotation",
-    component: Quotation,
+    component: SalesHub,
     icon: "FileText",
     category: "merchandising",
     enabled: true,
@@ -193,7 +142,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "sales-pipeline",
     name: "خط البيع",
     path: "/sales-pipeline",
-    component: SalesPipeline,
+    component: SalesHub,
     icon: "TrendingUp",
     category: "merchandising",
     enabled: true,
@@ -204,7 +153,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "sales-forecasting",
     name: "توقعات المبيعات",
     path: "/sales-forecasting",
-    component: SalesForecasting,
+    component: SalesHub,
     icon: "BarChart3",
     category: "merchandising",
     enabled: true,
@@ -215,7 +164,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "sales-commissions",
     name: "عمولات المبيعات",
     path: "/sales-commissions",
-    component: SalesCommissions,
+    component: SalesHub,
     icon: "DollarSign",
     category: "merchandising",
     enabled: true,
@@ -226,7 +175,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "shipping-delivery",
     name: "الشحن والتوصيل",
     path: "/shipping-delivery",
-    component: ShippingDelivery,
+    component: SalesHub,
     icon: "Truck",
     category: "merchandising",
     enabled: true,
@@ -237,7 +186,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "purchase-requests",
     name: "طلبات الشراء",
     path: "/purchase-requests",
-    component: PurchaseRequests,
+    component: InventoryHub,
     icon: "FileText",
     category: "inventory",
     enabled: true,
@@ -248,7 +197,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "purchase-orders",
     name: "أوامر الشراء",
     path: "/purchase-orders",
-    component: PurchaseOrders,
+    component: InventoryHub,
     icon: "ShoppingCart",
     category: "inventory",
     enabled: true,
@@ -259,7 +208,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "rfq",
     name: "عروض أسعار الموردين",
     path: "/rfq",
-    component: RFQ,
+    component: InventoryHub,
     icon: "MessageSquare",
     category: "inventory",
     enabled: true,
@@ -270,7 +219,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "goods-receipt",
     name: "إيصالات الاستلام",
     path: "/goods-receipt",
-    component: GoodsReceipt,
+    component: InventoryHub,
     icon: "PackageCheck",
     category: "inventory",
     enabled: true,
@@ -281,7 +230,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "sales-rep-app",
     name: "مندوب المبيعات",
     path: "/sales-rep",
-    component: SalesRepApp,
+    component: SalesHub,
     icon: "Smartphone",
     category: "merchandising",
     enabled: true,
@@ -297,7 +246,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "inventory",
     name: "المخزون",
     path: "/inventory",
-    component: Inventory,
+    component: InventoryHub,
     icon: "Boxes",
     category: "inventory",
     enabled: true,
@@ -308,7 +257,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "mrp",
     name: "تخطيط المواد",
     path: "/mrp",
-    component: MRP,
+    component: InventoryHub,
     icon: "PackageSearch",
     category: "inventory",
     enabled: true,
@@ -319,7 +268,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "suppliers",
     name: "الموردين",
     path: "/suppliers",
-    component: Suppliers,
+    component: InventoryHub,
     icon: "Truck",
     category: "inventory",
     enabled: true,
@@ -330,7 +279,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "subcontracting",
     name: "التشغيل الخارجي",
     path: "/subcontracting",
-    component: Subcontracting,
+    component: InventoryHub,
     icon: "ExternalLink",
     category: "inventory",
     enabled: true,
@@ -341,7 +290,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "finished-goods",
     name: "مخزن المنتج النهائي",
     path: "/finished-goods",
-    component: FinishedGoods,
+    component: SalesHub,
     icon: "PackageCheck",
     category: "inventory",
     enabled: true,
@@ -352,7 +301,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "grn",
     name: "استلام بضاعة (GRN)",
     path: "/grn",
-    component: GRN,
+    component: InventoryHub,
     icon: "ClipboardCheck",
     category: "inventory",
     enabled: true,
@@ -367,7 +316,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "bom",
     name: "قوائم المواد",
     path: "/bom",
-    component: BOM,
+    component: ProductionHub,
     icon: "Layers",
     category: "bom",
     enabled: true,
@@ -378,7 +327,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "cad-viewer",
     name: "عارض CAD",
     path: "/cad-viewer",
-    component: CADViewer,
+    component: ProductionHub,
     icon: "Monitor",
     category: "bom",
     enabled: true,
@@ -394,7 +343,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "factory",
     name: "خطوط الإنتاج",
     path: "/factory",
-    component: Factory,
+    component: ProductionHub,
     icon: "Factory",
     category: "production",
     enabled: true,
@@ -405,7 +354,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "production-models",
     name: "الموديلات",
     path: "/production-models",
-    component: ProductionModels,
+    component: ProductionHub,
     icon: "Tag",
     category: "production",
     enabled: true,
@@ -416,7 +365,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "cutting",
     name: "القص",
     path: "/cutting",
-    component: Cutting,
+    component: ProductionHub,
     icon: "Scissors",
     category: "production",
     enabled: true,
@@ -427,7 +376,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "work-orders",
     name: "أوامر الشغل",
     path: "/work-orders",
-    component: WorkOrders,
+    component: ProductionHub,
     icon: "FileCheck",
     category: "production",
     enabled: true,
@@ -438,7 +387,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "qr-tracking",
     name: "تتبع الباندلز",
     path: "/qr-tracking",
-    component: QRTracking,
+    component: ProductionHub,
     icon: "QrCode",
     category: "production",
     enabled: true,
@@ -449,7 +398,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "barcode-generator",
     name: "توليد باركود",
     path: "/barcode-generator",
-    component: BarcodeGenerator,
+    component: ProductionHub,
     icon: "Tag",
     category: "production",
     enabled: true,
@@ -460,7 +409,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "barcode-scanner",
     name: "ماسح الباركود",
     path: "/barcode-scanner",
-    component: BarcodeScanner,
+    component: ProductionHub,
     icon: "ScanLine",
     category: "production",
     enabled: true,
@@ -471,7 +420,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "realtime-production",
     name: "الإنتاج المباشر",
     path: "/realtime-production",
-    component: RealTimeProduction,
+    component: ProductionHub,
     icon: "Activity",
     category: "production",
     enabled: true,
@@ -482,7 +431,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "wastage",
     name: "الهالك",
     path: "/wastage",
-    component: Wastage,
+    component: SalesHub,
     icon: "Scissors",
     category: "production",
     enabled: true,
@@ -497,7 +446,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "quality-control",
     name: "الجودة",
     path: "/quality-control",
-    component: QualityControl,
+    component: ProductionHub,
     icon: "ShieldCheck",
     category: "quality",
     enabled: true,
@@ -508,7 +457,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "aql-calculator",
     name: "حساب AQL",
     path: "/aql-calculator",
-    component: AQLCalculator,
+    component: ProductionHub,
     icon: "Shield",
     category: "quality",
     enabled: true,
@@ -523,7 +472,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "employees",
     name: "العمال",
     path: "/employees",
-    component: Employees,
+    component: HRHub,
     icon: "Users",
     category: "hr",
     enabled: true,
@@ -534,7 +483,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "departments",
     name: "الأقسام",
     path: "/departments",
-    component: Departments,
+    component: HRHub,
     icon: "Building2",
     category: "hr",
     enabled: true,
@@ -545,7 +494,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "recruitment",
     name: "التعيين",
     path: "/recruitment",
-    component: Recruitment,
+    component: HRHub,
     icon: "Briefcase",
     category: "hr",
     enabled: true,
@@ -556,7 +505,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "performance",
     name: "التقييم",
     path: "/performance",
-    component: Performance,
+    component: HRHub,
     icon: "TrendingUp",
     category: "hr",
     enabled: true,
@@ -567,7 +516,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "leaves",
     name: "الإجازات",
     path: "/leaves",
-    component: Leaves,
+    component: HRHub,
     icon: "CalendarDays",
     category: "hr",
     enabled: true,
@@ -582,7 +531,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "attendance",
     name: "الحضور والغياب",
     path: "/attendance",
-    component: Attendance,
+    component: HRHub,
     icon: "Clock",
     category: "attendance",
     enabled: true,
@@ -593,7 +542,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "shifts",
     name: "الورديات",
     path: "/shifts",
-    component: Shifts,
+    component: HRHub,
     icon: "Sun",
     category: "attendance",
     enabled: true,
@@ -604,7 +553,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "shift-report",
     name: "تقرير الوردية",
     path: "/shift-report",
-    component: ShiftReport,
+    component: HRHub,
     icon: "ClipboardList",
     category: "attendance",
     enabled: true,
@@ -626,7 +575,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "worker-portal",
     name: "بوابة العامل",
     path: "/worker-portal",
-    component: WorkerPortal,
+    component: HRHub,
     icon: "User",
     category: "attendance",
     enabled: true,
@@ -637,7 +586,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "zkteco",
     name: "بصمة ZKTeco",
     path: "/zkteco",
-    component: ZKTeco,
+    component: HRHub,
     icon: "Fingerprint",
     category: "attendance",
     enabled: true,
@@ -652,7 +601,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "payroll",
     name: "كشف الرواتب",
     path: "/payroll",
-    component: Payroll,
+    component: AccountingHub,
     icon: "CreditCard",
     category: "payroll",
     enabled: true,
@@ -663,7 +612,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "piece-rate",
     name: "أجر القطعة",
     path: "/piece-rate",
-    component: PieceRate,
+    component: AccountingHub,
     icon: "Calculator",
     category: "payroll",
     enabled: true,
@@ -674,7 +623,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "advances",
     name: "السلف",
     path: "/advances",
-    component: Advances,
+    component: AccountingHub,
     icon: "Wallet",
     category: "payroll",
     enabled: true,
@@ -685,7 +634,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "bonuses",
     name: "المكافآت والخصومات",
     path: "/bonuses",
-    component: BonusPenalties,
+    component: AccountingHub,
     icon: "Award",
     category: "payroll",
     enabled: true,
@@ -700,7 +649,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "cost-calculation",
     name: "تكاليف الإنتاج",
     path: "/cost-calculation",
-    component: CostCalculation,
+    component: AccountingHub,
     icon: "TrendingUp",
     category: "accounting",
     enabled: true,
@@ -711,7 +660,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "expenses",
     name: "المصاريف التشغيلية",
     path: "/expenses",
-    component: Expenses,
+    component: AccountingHub,
     icon: "Receipt",
     category: "accounting",
     enabled: true,
@@ -722,7 +671,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "financial",
     name: "التقارير المالية",
     path: "/financial",
-    component: FinancialReport,
+    component: AccountingHub,
     icon: "BarChart3",
     category: "accounting",
     enabled: true,
@@ -733,7 +682,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "invoices",
     name: "الفواتير",
     path: "/invoices",
-    component: Invoices,
+    component: AccountingHub,
     icon: "Receipt",
     category: "accounting",
     enabled: true,
@@ -744,7 +693,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "vouchers",
     name: "المستخلصات",
     path: "/vouchers",
-    component: Vouchers,
+    component: AccountingHub,
     icon: "Banknote",
     category: "accounting",
     enabled: true,
@@ -766,7 +715,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "chart-of-accounts",
     name: "الحسابات والقوائم المالية",
     path: "/chart-of-accounts",
-    component: ChartOfAccounts,
+    component: AccountingHub,
     icon: "BookOpen",
     category: "accounting",
     enabled: true,
@@ -777,7 +726,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "treasury",
     name: "الخزينة",
     path: "/treasury",
-    component: Treasury,
+    component: AccountingHub,
     icon: "Wallet",
     category: "accounting",
     enabled: true,
@@ -788,7 +737,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "opening-balances",
     name: "الأرصدة الافتتاحية",
     path: "/opening-balances",
-    component: OpeningBalances,
+    component: AccountingHub,
     icon: "Lock",
     category: "accounting",
     enabled: true,
@@ -799,7 +748,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "aging-credit",
     name: "المديونيات والائتمان",
     path: "/aging-credit",
-    component: AgingCredit,
+    component: AccountingHub,
     icon: "Timer",
     category: "accounting",
     enabled: true,
@@ -928,7 +877,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "sam-calculator",
     name: "SAM Calculator",
     path: "/sam-calculator",
-    component: SAMCalculator,
+    component: ProductionHub,
     icon: "Calculator",
     category: "production",
     enabled: true,
@@ -939,7 +888,7 @@ export const ALL_MODULES: AppModule[] = [
     id: "line-balancing",
     name: "Line Balancing + WIP",
     path: "/line-balancing",
-    component: LineBalancing,
+    component: ProductionHub,
     icon: "GitBranch",
     category: "production",
     enabled: true,
@@ -1021,7 +970,34 @@ export const ALL_MODULES: AppModule[] = [
 // ─── helpers ───
 
 export function getEnabledModules(): AppModule[] {
-  return ALL_MODULES.filter((m) => m.enabled);
+  let disabledIds: string[] = [];
+  try {
+    const stored = localStorage.getItem("disabled_modules");
+    if (stored) {
+      disabledIds = JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Failed to parse disabled modules from localStorage", e);
+  }
+  return ALL_MODULES.filter((m) => m.enabled && !disabledIds.includes(m.id));
+}
+
+export function useEnabledModules() {
+  const [modules, setModules] = useState<AppModule[]>(() => getEnabledModules());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setModules(getEnabledModules());
+    };
+    window.addEventListener("modules_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("modules_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  return modules;
 }
 
 // خريطة تحويل الفئات القديمة (14 فئة) إلى الفئات الست الرئيسية لنظام الـ ERP
@@ -1072,14 +1048,12 @@ export const collapsibleCategories: ERPCategory[] = [
   "system",
 ];
 
-export function getModulesByCategory(): {
+export function getModulesByCategory(enabled: AppModule[] = getEnabledModules()): {
   title: string;
   category: ERPCategory;
   modules: AppModule[];
   collapsible: boolean;
 }[] {
-  const enabled = getEnabledModules();
-
   const grouped = new Map<ERPCategory, AppModule[]>();
   enabled.forEach((m) => {
     const erpCat = categoryMapping[m.category] || "system";
@@ -1099,7 +1073,7 @@ export function getModulesByCategory(): {
 }
 
 export function isModuleEnabled(id: string): boolean {
-  return ALL_MODULES.find((m) => m.id === id)?.enabled ?? false;
+  return getEnabledModules().some((m) => m.id === id);
 }
 
 export function getModulePriceTotal(): number {

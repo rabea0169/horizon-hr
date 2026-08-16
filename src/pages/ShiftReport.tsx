@@ -63,7 +63,7 @@ export default function ShiftReportPage() {
     <div className="space-y-6 max-w-7xl mx-auto" dir="rtl">
       {/* Print header */}
       <div className="print-only hidden text-center mb-4">
-        <h1 className="text-xl font-bold text-black">مصنع Horizon للملابس الجاهزة</h1>
+        <h1 className="text-xl font-bold text-black">مصنع سليم للملابس الجاهزة</h1>
         <p className="text-lg text-black mt-1">تقرير الوردية - {selectedDate}</p>
         <hr className="my-3 border-gray-300" />
       </div>

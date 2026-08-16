@@ -113,7 +113,7 @@ export default function PieceRatePage() {
     <div className="space-y-6 max-w-7xl mx-auto" dir="rtl">
       {/* Print header */}
       <div className="print-only hidden text-center mb-8">
-        <h1 className="text-2xl font-bold text-black">مصنع Horizon للملابس الجاهزة</h1>
+        <h1 className="text-2xl font-bold text-black">مصنع سليم للملابس الجاهزة</h1>
         <p className="text-lg text-black mt-2">كشف أجور بالقطعة - {selectedMonth}</p>
         <p className="text-sm text-gray-600 mt-1">تاريخ الطباعة: {new Date().toLocaleDateString("ar-EG")}</p>
         <hr className="my-4 border-gray-300" />

@@ -4,190 +4,225 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Package, CheckCircle, AlertTriangle, User, CalendarDays } from "lucide-react";
-
-const DEMO_DATA = {
-  name: "أحمد محمد",
-  code: "EMP-0012",
-  department: "خياطة",
-  line: "Line 3",
-  machine: "Overlock 4T",
-  skillLevel: "Expert",
-  joinDate: "2024-03-15",
-  // Today's production
-  todayPieces: 142,
-  todayTarget: 150,
-  todayDefects: 3,
-  hourlyRate: [18, 22, 19, 25, 20, 15, 23, 24, 21, 20, 22, 24],
-  // This month
-  monthPieces: 3240,
-  monthTarget: 3300,
-  monthSalary: 4850,
-  baseSalary: 3500,
-  pieceRateEarnings: 920,
-  qualityBonus: 280,
-  overtimePay: 150,
-  // Attendance this month
-  presentDays: 22,
-  lateDays: 2,
-  absentDays: 0,
-  leavesUsed: 2,
-  leavesBalance: 18,
-  // Quality
-  qualityScore: 96,
-  defectRate: 1.8,
-  reworkRate: 0.5,
-};
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DollarSign, User, CalendarDays, Key, LogOut } from "lucide-react";
+import { trpc } from "@/providers/trpc";
+import { toast } from "sonner";
 
 export default function WorkerPortal() {
-  const [workerCode, setWorkerCode] = useState("EMP-0012");
-  const [authenticated, setAuthenticated] = useState(true);
-  const d = DEMO_DATA;
+  const [workerCode, setWorkerCode] = useState("EMP-001");
+  const [activeWorker, setActiveWorker] = useState<any>(null);
 
-  if (!authenticated) {
+  // Let's use trpc query with enabled flag:
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: searchResults, isFetching } = trpc.employee.list.useQuery(
+    { search: searchTerm },
+    { enabled: searchTerm.length > 0 }
+  );
+
+  const { data: attendanceData } = trpc.attendance.list.useQuery(
+    { employeeId: activeWorker?.id },
+    { enabled: !!activeWorker }
+  );
+
+  const handleLogin = () => {
+    if (!workerCode.trim()) {
+      toast.error("يرجى إدخال كود العامل");
+      return;
+    }
+    setSearchTerm(workerCode);
+  };
+
+  // If search results are loaded, check if we found a match
+  const handleCheckResults = () => {
+    if (searchResults && searchResults.employees) {
+      // Find exact match by code
+      const match = searchResults.employees.find(
+        (e) => e.employeeCode.toLowerCase() === workerCode.trim().toLowerCase()
+      );
+      if (match) {
+        setActiveWorker(match);
+        toast.success(`أهلاً بك يا ${match.fullName}`);
+        setSearchTerm(""); // clear search
+      } else {
+        toast.error("لم يتم العثور على موظف بهذا الكود");
+        setSearchTerm("");
+      }
+    }
+  };
+
+  // Run handleCheckResults when searchResults changes
+  if (searchTerm && !isFetching && searchResults) {
+    handleCheckResults();
+  }
+
+  if (!activeWorker) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
-        <Card className="w-full max-w-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+      <div className="min-h-[60vh] flex items-center justify-center font-sans text-right" dir="rtl">
+        <Card className="w-full max-w-sm border shadow-lg" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
           <CardContent className="p-6 space-y-4">
-            <div className="text-center"><User size={40} className="mx-auto mb-2" style={{ color: "var(--accent-color)" }} /><h2 className="text-lg font-bold">بوابة العامل</h2></div>
-            <Input placeholder="كود العامل..." value={workerCode} onChange={e => setWorkerCode(e.target.value)} className="text-right" style={{ background: "var(--bg-input)", borderColor: "var(--border-color)", color: "var(--text-primary)" }} />
-            <Button className="w-full text-white" style={{ background: "var(--accent-color)" }} onClick={() => setAuthenticated(true)}>دخول</Button>
+            <div className="text-center">
+              <User size={40} className="mx-auto mb-2 text-amber-500" />
+              <h2 className="text-lg font-bold">بوابة الموظف الذاتية</h2>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>أدخل كود الموظف الخاص بك للاطلاع على بياناتك والراتب</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">كود الموظف</label>
+              <div className="relative">
+                <Input 
+                  placeholder="مثال: EMP-001" 
+                  value={workerCode} 
+                  onChange={e => setWorkerCode(e.target.value)} 
+                  className="text-center font-mono h-11" 
+                  style={{ background: "var(--bg-input)", borderColor: "var(--border-color)", color: "var(--text-primary)" }} 
+                  onKeyDown={e => e.key === "Enter" && handleLogin()}
+                />
+              </div>
+            </div>
+            <Button className="w-full text-white bg-amber-600 hover:bg-amber-700 h-11 gap-2" onClick={handleLogin} disabled={isFetching}>
+              {isFetching ? "جاري التحقق..." : <><Key size={16} /> دخول البوابة</>}
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const logs = attendanceData?.attendance ?? [];
+  const totalDays = logs.length;
+  const presentDays = logs.filter(l => l.status === "present" || l.status === "late").length;
+
   return (
-    <div className="space-y-4" dir="rtl">
+    <div className="space-y-4 max-w-5xl mx-auto font-sans text-right" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "var(--border-color)" }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--accent-color)" }}>
-            <User size={20} className="text-white" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white bg-amber-600 font-bold text-lg">
+            {activeWorker.fullName.charAt(0)}
           </div>
           <div>
-            <h2 className="text-lg font-bold">{d.name}</h2>
-            <div className="flex gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
-              <span>{d.code}</span><span>•</span><span>{d.department}</span><span>•</span><span>{d.line}</span>
+            <h2 className="text-lg font-bold">{activeWorker.fullName}</h2>
+            <div className="flex gap-2 text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              <span>كود: {activeWorker.employeeCode}</span>
+              <span>•</span>
+              <span>قسم: {activeWorker.department?.name || "عام"}</span>
+              <span>•</span>
+              <span>نوع التوظيف: {activeWorker.employmentType === "full_time" ? "دوام كامل" : "دوام جزئي"}</span>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Badge variant="outline" className="bg-emerald-500/15 text-emerald-400">{d.skillLevel}</Badge>
-          <Button size="sm" variant="outline" onClick={() => setAuthenticated(false)}>تبديل</Button>
+          <Badge variant="outline" className="bg-emerald-500/15 text-emerald-400 capitalize">
+            {activeWorker.role === "worker" ? "عامل" : activeWorker.role === "supervisor" ? "مشرف" : "إداري"}
+          </Badge>
+          <Button size="sm" variant="outline" className="border-red-500/20 text-red-400 hover:bg-red-500/10 gap-1.5" onClick={() => setActiveWorker(null)}>
+            <LogOut size={13} /> خروج
+          </Button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1"><Package size={14} style={{ color: "var(--accent-color)" }} /><span className="text-xs" style={{ color: "var(--text-muted)" }}>إنتاج اليوم</span></div>
-            <p className="text-xl font-bold">{d.todayPieces}<span className="text-xs font-normal mr-1" style={{ color: "var(--text-muted)" }}>/ {d.todayTarget}</span></p>
-            <div className="w-full bg-white/10 rounded-full h-1.5 mt-1"><div className="h-1.5 rounded-full" style={{ width: `${(d.todayPieces / d.todayTarget) * 100}%`, background: "var(--accent-color)" }} /></div>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1 justify-end"><span className="text-xs" style={{ color: "var(--text-muted)" }}>الراتب الأساسي الحالي</span><DollarSign size={14} className="text-emerald-400" /></div>
+            <p className="text-2xl font-bold text-emerald-400">
+              {Number(activeWorker.salary || 0).toLocaleString()} <span className="text-xs font-normal" style={{ color: "var(--text-muted)" }}>ج.م</span>
+            </p>
+            <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>طريقة الحساب: {activeWorker.salaryType === "piece_rate" ? "بالإنتاج / القطعة" : activeWorker.salaryType === "mixed" ? "مختلط" : "راتب شهري ثابت"}</p>
           </CardContent>
         </Card>
+
         <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-emerald-400" /><span className="text-xs" style={{ color: "var(--text-muted)" }}>الراتب الشهري</span></div>
-            <p className="text-xl font-bold text-emerald-400">{d.monthSalary.toLocaleString()}</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>ج.م</p>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1 justify-end"><span className="text-xs" style={{ color: "var(--text-muted)" }}>نسبة الحضور</span><CalendarDays size={14} className="text-blue-400" /></div>
+            <p className="text-2xl font-bold text-blue-400">
+              {totalDays > 0 ? `${Math.round((presentDays / totalDays) * 100)}%` : "100%"}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>إجمالي تسجيلات الحضور هذا الشهر: {totalDays} أيام</p>
           </CardContent>
         </Card>
+
         <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1"><CheckCircle size={14} className="text-blue-400" /><span className="text-xs" style={{ color: "var(--text-muted)" }}>جودة</span></div>
-            <p className="text-xl font-bold text-blue-400">{d.qualityScore}%</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>نسبة القبول</p>
-          </CardContent>
-        </Card>
-        <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1"><CalendarDays size={14} className="text-yellow-400" /><span className="text-xs" style={{ color: "var(--text-muted)" }}>الحضور</span></div>
-            <p className="text-xl font-bold">{d.presentDays}<span className="text-xs font-normal mr-1" style={{ color: "var(--text-muted)" }}>/ 24</span></p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{d.lateDays} تأخر • {d.absentDays} غياب</p>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1 justify-end"><span className="text-xs" style={{ color: "var(--text-muted)" }}>تاريخ التعيين</span><CalendarDays size={14} className="text-amber-500" /></div>
+            <p className="text-lg font-bold">
+              {activeWorker.joinDate ? String(activeWorker.joinDate).split("T")[0] : "—"}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>حالة الموظف الحالية: <span className="text-emerald-400">نشط</span></p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="today">
-        <TabsList className="w-full" style={{ background: "var(--bg-card)" }}>
-          <TabsTrigger value="today" className="flex-1">اليوم</TabsTrigger>
-          <TabsTrigger value="month" className="flex-1">الشهر</TabsTrigger>
-          <TabsTrigger value="salary" className="flex-1">الراتب</TabsTrigger>
-          <TabsTrigger value="quality" className="flex-1">الجودة</TabsTrigger>
+      {/* Tabs */}
+      <Tabs defaultValue="attendance" className="w-full">
+        <TabsList className="h-auto flex-wrap border justify-start" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+          <TabsTrigger value="attendance" className="text-sm">سجل الحضور والغياب</TabsTrigger>
+          <TabsTrigger value="info" className="text-sm">الملف التعريفي والبيانات الشخصية</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="today" className="space-y-3 mt-3">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
-              <p className="text-2xl font-bold" style={{ color: "var(--accent-color)" }}>{d.todayPieces}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>قطعة اليوم</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
-              <p className="text-2xl font-bold">{d.todayTarget}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>الهدف</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
-              <p className="text-2xl font-bold text-red-400">{d.todayDefects}</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>عيوب</p>
-            </div>
-          </div>
+        <TabsContent value="attendance" className="mt-4">
           <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
             <CardContent className="p-4">
-              <h3 className="text-sm font-bold mb-3">الإنتاج الساعي</h3>
-              <div className="flex items-end gap-1 h-32">
-                {d.hourlyRate.map((h, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full rounded-t" style={{ height: `${(h / 30) * 100}px`, background: h >= 20 ? "var(--accent-color)" : "rgba(232,93,74,0.6)" }} />
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{i + 8}</span>
-                  </div>
-                ))}
+              <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--border-color)" }}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">وقت الحضور</TableHead>
+                      <TableHead className="text-right">وقت الانصراف</TableHead>
+                      <TableHead className="text-right">الحالة</TableHead>
+                      <TableHead className="text-right">ملاحظات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-6 text-sm" style={{ color: "var(--text-muted)" }}>لا توجد سجلات حضور مسجلة لك.</TableCell>
+                      </TableRow>
+                    ) : (
+                      logs.map(l => (
+                        <TableRow key={l.id}>
+                          <TableCell className="text-right">{l.date ? String(l.date).split("T")[0] : "—"}</TableCell>
+                          <TableCell className="text-right">{l.checkIn ? new Date(l.checkIn).toLocaleTimeString("ar-EG") : "—"}</TableCell>
+                          <TableCell className="text-right">{l.checkOut ? new Date(l.checkOut).toLocaleTimeString("ar-EG") : "—"}</TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="outline" className={l.status === "present" ? "bg-emerald-500/15 text-emerald-400" : l.status === "late" ? "bg-yellow-500/15 text-yellow-400" : "bg-red-500/15 text-red-400"}>
+                              {l.status === "present" ? "حاضر" : l.status === "late" ? "متأخر" : "غائب"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-xs" style={{ color: "var(--text-muted)" }}>{l.notes || "—"}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="month" className="space-y-3 mt-3">
+        <TabsContent value="info" className="mt-4">
           <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>إجمالي الإنتاج</span><span className="font-bold">{d.monthPieces.toLocaleString()} قطعة</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>الهدف</span><span>{d.monthTarget.toLocaleString()} قطعة</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>نسبة الإنجاز</span><span className="font-bold" style={{ color: d.monthPieces >= d.monthTarget ? "#2D6B5E" : "#C4933F" }}>{((d.monthPieces / d.monthTarget) * 100).toFixed(1)}%</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>أيام الحضور</span><span>{d.presentDays} يوم</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>أيام التأخر</span><span className="text-yellow-400">{d.lateDays} يوم</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>الإجازات المستخدمة</span><span>{d.leavesUsed} / 20</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>رصيد الإجازات</span><span className="text-emerald-400">{d.leavesBalance} يوم</span></div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="salary" className="space-y-3 mt-3">
-          <Card style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-            <CardContent className="p-4 space-y-2">
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>الراتب الأساسي</span><span>{d.baseSalary.toLocaleString()} ج.م</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>أجر القطعة</span><span className="text-emerald-400">+{d.pieceRateEarnings.toLocaleString()} ج.م</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>علاوة الجودة</span><span className="text-emerald-400">+{d.qualityBonus.toLocaleString()} ج.م</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>إضافي</span><span className="text-emerald-400">+{d.overtimePay.toLocaleString()} ج.م</span></div>
-              <div className="border-t pt-2 flex justify-between font-bold" style={{ borderColor: "var(--border-color)" }}><span>الإجمالي</span><span style={{ color: "var(--accent-color)" }}>{d.monthSalary.toLocaleString()} ج.م</span></div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="quality" className="space-y-3 mt-3">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
-              <p className="text-2xl font-bold text-blue-400">{d.qualityScore}%</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>الجودة</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
-              <p className="text-2xl font-bold text-yellow-400">{d.defectRate}%</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>نسبة العيوب</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
-              <p className="text-2xl font-bold text-emerald-400">{d.reworkRate}%</p><p className="text-xs" style={{ color: "var(--text-muted)" }}>إعادة عمل</p>
-            </div>
-          </div>
-          <Card style={{ background: d.qualityScore >= 95 ? "rgba(45,107,94,0.1)" : d.qualityScore >= 90 ? "rgba(196,147,63,0.1)" : "rgba(232,93,74,0.1)", borderColor: d.qualityScore >= 95 ? "#2D6B5E" : d.qualityScore >= 90 ? "#C4933F" : "#E85D4A" }}>
-            <CardContent className="p-3 flex items-center gap-2">
-              {d.qualityScore >= 95 ? <CheckCircle size={16} className="text-emerald-400" /> : <AlertTriangle size={16} className="text-yellow-400" />}
-              <span className="text-sm">{d.qualityScore >= 95 ? "أداء ممتاز! مؤهل لعلاوة الجودة +15%" : d.qualityScore >= 90 ? "أداء جيد. يمكن التحسين." : "يحتاج تحسين. تدريب مقترح."}</span>
+            <CardContent className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
+                <div className="space-y-1">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>الاسم الكامل</span>
+                  <p className="font-semibold">{activeWorker.fullName}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>البريد الإلكتروني</span>
+                  <p className="font-semibold font-mono">{activeWorker.email || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>رقم الهاتف</span>
+                  <p className="font-semibold font-mono">{activeWorker.phone || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>المسمى الوظيفي</span>
+                  <p className="font-semibold">{activeWorker.jobTitle}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -5,6 +5,22 @@ import type { TrpcContext } from "./context";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  errorFormatter({ shape }) {
+    const isProduction = process.env.NODE_ENV === "production";
+    // في الإنتاج: نخفي تفاصيل الخطأ الداخلية لمنع تسريب معلومات النظام
+    return {
+      ...shape,
+      message:
+        isProduction && shape.data?.code === "INTERNAL_SERVER_ERROR"
+          ? "حدث خطأ في النظام، يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني"
+          : shape.message,
+      data: {
+        ...shape.data,
+        stack: isProduction ? undefined : shape.data?.stack,
+        path: isProduction ? undefined : shape.data?.path,
+      },
+    };
+  },
 });
 
 export const createRouter = t.router;

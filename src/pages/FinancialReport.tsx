@@ -79,7 +79,7 @@ export default function FinancialReport() {
     <div className="space-y-6 max-w-7xl mx-auto" dir="rtl">
       {/* Print Header */}
       <div className="print-only hidden text-center mb-4">
-        <h1 className="text-2xl font-bold text-black">مصنع Horizon للملابس الجاهزة</h1>
+        <h1 className="text-2xl font-bold text-black">مصنع سليم للملابس الجاهزة</h1>
         <p className="text-lg text-black">التقرير المالي - {selectedMonth}</p>
         <hr className="my-3 border-gray-300" />
       </div>

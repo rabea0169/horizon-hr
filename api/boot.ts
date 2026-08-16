@@ -65,6 +65,12 @@ app.get("/api/health", (c) => c.json({
   uptime: process.uptime(),
 }));
 
+// Ping endpoint used by ServerSetup UI
+app.get("/api/ping", (c) => c.json({
+  ok: true,
+  timestamp: Date.now()
+}));
+
 app.get("/api/health-check", async (c) => {
   const db = getDb();
   const report: {

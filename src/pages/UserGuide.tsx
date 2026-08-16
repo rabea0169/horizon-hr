@@ -200,7 +200,7 @@ const guideSections: GuideSection[] = [
           "اذهب إلى \"اختبار الجودة\" من القائمة",
           "اضغط \"بدء الاختبار\" لفحص جميع الأنظمة",
           "انسخ نتائج الاختبار وأرسلها للدعم الفني",
-          "أو تواصل على: support@horizon-hr.com",
+          "أو تواصل على: support@selim-hr.com",
         ],
       },
     ],
@@ -234,7 +234,7 @@ export default function UserGuide() {
           <BookOpen size={32} className="text-emerald-400" />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">دليل المستخدم</h2>
-        <p className="text-sm text-white/40">كل ما تحتاج لمعرفته لاستخدام Horizon HR بفعالية</p>
+        <p className="text-sm text-white/40">كل ما تحتاج لمعرفته لاستخدام سليم HR بفعالية</p>
       </div>
 
       {/* Search */}

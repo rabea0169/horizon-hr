@@ -5,9 +5,17 @@ import { grns } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export const grnRouter = createRouter({
-  list: authedQuery.query(async () => {
-    return getDb().select().from(grns).orderBy(desc(grns.id)).limit(200);
-  }),
+  list: authedQuery
+    .input(z.object({ page: z.number().optional(), pageSize: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      const page = input?.page;
+      const pageSize = input?.pageSize;
+      const q = getDb().select().from(grns).orderBy(desc(grns.id));
+      if (page && pageSize) {
+        return q.limit(pageSize).offset((page - 1) * pageSize);
+      }
+      return q.limit(200);
+    }),
   create: adminQuery
     .input(
       z.object({

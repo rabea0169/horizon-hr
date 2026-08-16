@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { useRoles, getRoleLabel, getRoleColor } from "@/hooks/useRoles";
+import { useRoles, getRoleLabel, getRoleColor, canAccess } from "@/hooks/useRoles";
 import { trpc } from "@/providers/trpc";
 import {
   useSidebarConfig, CATEGORY_NAMES, CATEGORY_COLORS,
 } from "@/hooks/useSidebarConfig";
 import type { SidebarModule } from "@/hooks/useSidebarConfig";
-import { getModulesByCategory, type AppModule, categoryMapping } from "../modules.config";
+import { getModulesByCategory, type AppModule, categoryMapping, useEnabledModules } from "../modules.config";
 import {
   LayoutDashboard, Users, Building2, Clock, CalendarDays,
   TrendingUp, Briefcase, CreditCard, Settings, Search, Bell,
@@ -87,10 +87,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const alertsCount = alertsData?.alerts?.length || 0;
   const unreadCount = (notificationsData?.length || 0) + alertsCount;
 
+  const enabledModules = useEnabledModules().filter((mod) => canAccess(user, mod.path));
   // Sidebar config hook
-  const moduleGroups = getModulesByCategory();
-  const allEnabledModules = moduleGroups.flatMap((g) => g.modules).filter((m) => m.enabled);
-  const sidebarModules = allEnabledModules.map(toSidebarModule);
+  const moduleGroups = getModulesByCategory(enabledModules);
+  const allEnabledModules = moduleGroups.flatMap((g) => g.modules);
+  const PRIMARY_PATHS = [
+    "/",
+    "/executive",
+    "/sales-orders",
+    "/inventory",
+    "/factory",
+    "/employees",
+    "/chart-of-accounts",
+    "/machines",
+    "/advanced-bi",
+    "/reports",
+    "/settings",
+    "/kiosk",
+  ];
+  const sidebarModules = allEnabledModules
+    .map(toSidebarModule)
+    .filter((mod) => PRIMARY_PATHS.includes(mod.path));
   const {
     groupedModules, quickAccessItems, trackUsage, togglePin,
     searchModules, isPinned,
@@ -182,9 +199,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="h-14 flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "var(--border-color)" }}>
             <Link to="/" className="flex items-center gap-3" onClick={() => handleNavClick(sidebarModules.find((m) => m.id === "dashboard")!)}>
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--accent-color, #4A2C3F)" }}>
-                <span className="text-white font-bold text-sm">هـ</span>
+                <span className="text-white font-bold text-sm">سـ</span>
               </div>
-              {!sidebarCollapsed && <span className="font-bold text-lg tracking-tight" style={{ color: "var(--text-primary)" }}>هورايزن HR</span>}
+              {!sidebarCollapsed && <span className="font-bold text-lg tracking-tight" style={{ color: "var(--text-primary)" }}>سليم HR</span>}
             </Link>
             <button onClick={() => setMobileMenuOpen(false)} className="mr-auto lg:hidden" style={{ color: "var(--text-muted)" }}><X size={20} /></button>
           </div>
@@ -291,7 +308,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {Array.from(groupedModules.entries()).map(([category, modules]) => {
                 const catColor = CATEGORY_COLORS[category] || "#607D8B";
                 const catName = CATEGORY_NAMES[category] || category;
-                const isOpen = isCategoryOpen(category);
+                const isOpen = isCategoryOpen(category) || modules.length === 1;
                 const showToggle = !sidebarCollapsed && modules.length > 1;
 
                 return (

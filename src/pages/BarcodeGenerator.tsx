@@ -162,6 +162,16 @@ function PrintSheet({ stickers }: { stickers: StickerData[] }) {
   );
 }
 
+function escapeHtml(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export default function BarcodeGenerator() {
   // ── Data queries ──
   const { data: bundlesList, isLoading: bundlesLoading } = trpc.bundle.list.useQuery();
@@ -275,21 +285,21 @@ export default function BarcodeGenerator() {
           ${stickerQueue.map((s) => {
             const qrSvg = `<svg viewBox="0 0 60 60" width="50" height="50">
               <rect width="60" height="60" fill="white"/>
-              <text x="30" y="32" text-anchor="middle" font-size="8">QR: ${s.bundleCode}</text>
+              <text x="30" y="32" text-anchor="middle" font-size="8">QR: ${escapeHtml(s.bundleCode)}</text>
             </svg>`;
             return `
               <div class="sticker">
                 <div class="sticker-header">
-                  <div class="model">${s.modelName}</div>
-                  <div class="code">${s.bundleCode}</div>
+                  <div class="model">${escapeHtml(s.modelName)}</div>
+                  <div class="code">${escapeHtml(s.bundleCode)}</div>
                 </div>
-                ${s.type === "qr" ? qrSvg : `<svg class="barcode-svg" data-code="${s.bundleCode}" width="120" height="40"></svg>`}
+                ${s.type === "qr" ? qrSvg : `<svg class="barcode-svg" data-code="${escapeHtml(s.bundleCode)}" width="120" height="40"></svg>`}
                 <div class="sticker-meta">
-                  <span>Size: ${s.size}</span> |
-                  <span>Clr: ${s.color}</span> |
+                  <span>Size: ${escapeHtml(s.size)}</span> |
+                  <span>Clr: ${escapeHtml(s.color)}</span> |
                   <span>Qty: ${s.quantity}</span>
                 </div>
-                <div class="sticker-stage">${s.stage}</div>
+                <div class="sticker-stage">${escapeHtml(s.stage)}</div>
               </div>
             `;
           }).join("")}

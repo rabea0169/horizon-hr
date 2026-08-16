@@ -90,7 +90,7 @@ export default function MobileApp() {
       // Send test notification
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.ready.then((reg) => {
-          reg.showNotification("Horizon HR", {
+          reg.showNotification("Selim HR", {
             body: "تم تفعيل الإشعارات بنجاح!",
             icon: "/icon-192.png",
             dir: "rtl",
@@ -183,7 +183,7 @@ export default function MobileApp() {
         {/* Header */}
         <div className="p-4 flex items-center justify-between" style={{ background: "var(--bg-card)" }}>
           <div>
-            <h1 className="text-base font-bold text-white">Horizon HR</h1>
+            <h1 className="text-base font-bold text-white">Selim HR</h1>
             <p className="text-[10px] text-white/40">
               {currentTime.toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
@@ -493,7 +493,7 @@ export default function MobileApp() {
           <LogOut size={16} className="ml-2" /> تسجيل الخروج
         </Button>
 
-        <p className="text-[10px] text-white/20 text-center mt-4">Horizon HR v2.0 — PWA Enabled</p>
+        <p className="text-[10px] text-white/20 text-center mt-4">Selim HR v2.0 — PWA Enabled</p>
       </div>
     </div>
   );

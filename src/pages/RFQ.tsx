@@ -143,7 +143,7 @@ export default function RFQ() {
               <div><label className="text-sm" style={{ color: "var(--text-muted)" }}>شروط الدفع</label><Input value={form.paymentTerms} onChange={e => setForm({ ...form, paymentTerms: e.target.value })} className="text-right" style={{ background: "var(--bg-input)", borderColor: "var(--border-color)", color: "var(--text-primary)" }} /></div>
             </div>
           </div>
-          <DialogFooter><Button onClick={() => createMutation.mutate(form, { onSuccess: () => setDialog(false) })} className="text-white" style={{ background: "var(--accent-color)" }}>حفظ</Button></DialogFooter>
+          <DialogFooter><Button onClick={() => createMutation.mutate({ ...form, items: [] }, { onSuccess: () => setDialog(false) })} className="text-white" style={{ background: "var(--accent-color)" }}>حفظ</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

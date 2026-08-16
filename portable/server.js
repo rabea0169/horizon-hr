@@ -145,7 +145,19 @@ function handleAPI(req, res, pathname) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'];
+  const isAllowed = origin && (
+    allowedOrigins.includes(origin) || 
+    origin.startsWith('file://') || 
+    origin.startsWith('app://') || 
+    origin.startsWith('capacitor://')
+  );
+  if (isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   

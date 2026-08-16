@@ -1,7 +1,7 @@
 @echo off
-title Horizon HR Server
+title Selim HR Server
 echo ========================================
-echo    Horizon HR - Server
+echo    Selim HR - Server
 echo ========================================
 echo.
 
@@ -20,7 +20,7 @@ if %ERRORLEVEL% neq 0 (
 
 cd /d "C:\horizon-hr"
 
-echo [INFO] Starting Horizon HR server...
+echo [INFO] Starting Selim HR server...
 echo.
 echo    Local:  http://localhost:3000
 echo    Network: http://192.168.0.117:3000

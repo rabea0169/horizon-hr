@@ -1,20 +1,5 @@
-import { useState, useCallback } from "react";
-
-const DEFAULT_USERS: SystemUser[] = [
-  { id: 1, username: "admin", password: "admin123", fullName: "مدير النظام", role: "admin", active: true, createdAt: "2026-01-01" },
-  { id: 2, username: "supervisor", password: "super123", fullName: "مشرف الإنتاج", role: "supervisor", active: true, createdAt: "2026-01-01" },
-  { id: 3, username: "accountant", password: "acc123", fullName: "المحاسب", role: "accountant", active: true, createdAt: "2026-01-01" },
-  { id: 4, username: "worker", password: "work123", fullName: "عامل عادي", role: "worker", active: true, createdAt: "2026-01-01" },
-];
-
-function loadUsers(): SystemUser[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
-    return DEFAULT_USERS;
-  } catch { return DEFAULT_USERS; }
-}
+import { useCallback } from "react";
+import { trpc } from "@/providers/trpc";
 
 export type UserRole = "admin" | "supervisor" | "accountant" | "worker";
 
@@ -26,6 +11,7 @@ export interface SystemUser {
   role: UserRole;
   active: boolean;
   createdAt: string;
+  allowedModules?: string[];
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -69,81 +55,138 @@ const PERMISSIONS: Record<UserRole, string[]> = {
 export function getRoleLabel(role: UserRole) { return ROLE_LABELS[role]; }
 export function getRoleColor(role: UserRole) { return ROLE_COLORS[role]; }
 
-export function canAccess(role: UserRole, path: string): boolean {
-  const perms = PERMISSIONS[role] || [];
+export function canAccess(user: SystemUser | null, path: string): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+
+  if (user.allowedModules && user.allowedModules.length > 0) {
+    return user.allowedModules.some((p) => path === p || path.startsWith(p + "/"));
+  }
+
+  const perms = PERMISSIONS[user.role] || [];
   if (perms.includes("*")) return true;
   return perms.some((p) => path === p || path.startsWith(p + "/"));
 }
+import { toast } from "sonner";
+import { useAuth } from "./useAuth";
 
-const STORAGE_KEY = "hr_system_users";
 const SESSION_KEY = "hr_session_user";
 
 export function useRoles() {
-  const [users, setUsers] = useState<SystemUser[]>(loadUsers);
+  const utils = trpc.useUtils();
+  const auth = useAuth();
+  
+  const { data: usersData, isLoading } = trpc.auth.listUsers.useQuery(undefined, {
+    staleTime: 10000,
+  });
 
-  const saveUsers = useCallback((newUsers: SystemUser[]) => {
-    setUsers(newUsers);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUsers));
-  }, []);
+  const addUserMutation = trpc.auth.addUser.useMutation({
+    onSuccess: () => {
+      utils.auth.listUsers.invalidate();
+      toast.success("تم إضافة المستخدم بنجاح");
+    },
+  });
+
+  const removeUserMutation = trpc.auth.removeUser.useMutation({
+    onSuccess: () => {
+      utils.auth.listUsers.invalidate();
+      toast.success("تم إلغاء تفعيل حساب المستخدم بنجاح");
+    },
+  });
+
+  const loginMutation = trpc.auth.horizonLogin.useMutation();
+
+  const users: SystemUser[] = (usersData || []).map((u) => ({
+    id: u.id,
+    username: u.username,
+    fullName: u.fullName,
+    role: u.role as UserRole,
+    active: u.active,
+    createdAt: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "",
+    allowedModules: u.allowedModules as string[] | undefined,
+  }));
 
   const addUser = useCallback(
-    (user: Omit<SystemUser, "id" | "createdAt">) => {
-      const newUser: SystemUser = {
-        ...user,
-        id: Date.now(),
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      saveUsers([...users, newUser]);
-      return newUser;
+    async (user: Omit<SystemUser, "id" | "createdAt">) => {
+      if (!user.password) return;
+      await addUserMutation.mutateAsync({
+        username: user.username,
+        fullName: user.fullName,
+        password: user.password,
+        role: user.role,
+      });
     },
-    [users, saveUsers]
-  );
-
-  const updateUser = useCallback(
-    (id: number, changes: Partial<SystemUser>) => {
-      saveUsers(users.map((u) => (u.id === id ? { ...u, ...changes } : u)));
-    },
-    [users, saveUsers]
+    [addUserMutation]
   );
 
   const removeUser = useCallback(
-    (id: number) => { saveUsers(users.filter((u) => u.id !== id)); },
-    [users, saveUsers]
+    async (id: number) => {
+      await removeUserMutation.mutateAsync({ id });
+    },
+    [removeUserMutation]
   );
 
   const getSessionUser = useCallback((): SystemUser | null => {
+    if (auth.user) {
+      return {
+        id: auth.user.id || 0,
+        username: auth.user.username || "",
+        fullName: auth.user.fullName || auth.user.username || "",
+        role: auth.user.role as UserRole,
+        active: true,
+        createdAt: new Date().toISOString(),
+        allowedModules: auth.user.allowedModules || undefined,
+      };
+    }
+    // Fallback to session check if query is still loading or resolving
     try {
       const stored = sessionStorage.getItem(SESSION_KEY);
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
     }
-  }, []);
+  }, [auth.user]);
 
   const login = useCallback(
-    (username: string, password: string): SystemUser | null => {
-      const user = users.find(
-        (u) => u.username === username && u.active && u.password === password
-      );
-      if (user) {
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
-        return user;
+    async (username: string, password: string): Promise<SystemUser | null> => {
+      try {
+        const res = await loginMutation.mutateAsync({ username, password });
+        if (res.success && res.user) {
+          const sessionUser: SystemUser = {
+            id: res.user.id,
+            username: res.user.username,
+            fullName: res.user.fullName || "مستخدم",
+            role: res.user.role as UserRole,
+            active: true,
+            createdAt: new Date().toISOString(),
+          };
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+          sessionStorage.setItem("hr_auth", "1");
+          if (res.token) {
+            localStorage.setItem("hr_token", res.token);
+          }
+          await auth.refresh();
+          return sessionUser;
+        }
+      } catch (e) {
+        console.error("Login mutation error", e);
       }
       return null;
     },
-    [users]
+    [loginMutation, auth]
   );
 
   const logout = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem("hr_auth");
     localStorage.removeItem("hr_token");
-  }, []);
+    auth.logout();
+  }, [auth]);
 
   return {
     users,
+    isLoading: isLoading || auth.isLoading,
     addUser,
-    updateUser,
     removeUser,
     getSessionUser,
     login,

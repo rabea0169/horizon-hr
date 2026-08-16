@@ -1,9 +1,9 @@
 /**
- * Horizon HR - Service Worker
+ * Selim HR - Service Worker
  * PWA support with offline caching
  */
 
-const CACHE_NAME = "horizon-hr-v1";
+const CACHE_NAME = "selim-hr-v1";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -11,7 +11,7 @@ const STATIC_ASSETS = [
 
 // Install — cache static assets
 self.addEventListener("install", (event: any) => {
-  console.log("[SW] Installing Horizon HR Service Worker...");
+  console.log("[SW] Installing Selim HR Service Worker...");
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
@@ -23,7 +23,7 @@ self.addEventListener("install", (event: any) => {
 
 // Activate — clean old caches
 self.addEventListener("activate", (event: any) => {
-  console.log("[SW] Activating Horizon HR Service Worker...");
+  console.log("[SW] Activating Selim HR Service Worker...");
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -85,7 +85,7 @@ self.addEventListener("fetch", (event: any) => {
 // Push notifications
 self.addEventListener("push", (event: any) => {
   const data = event.data?.json() ?? {};
-  const title = data.title || "Horizon HR";
+  const title = data.title || "Selim HR";
   const options = {
     body: data.body || "إشعار جديد",
     icon: "/icon-192.png",

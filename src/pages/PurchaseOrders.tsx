@@ -49,7 +49,14 @@ export default function PurchaseOrders() {
     const vatAmount = subtotal * (vatRate / 100);
     const shippingCost = parseFloat(form.shippingCost) || 0;
     const total = subtotal + vatAmount + shippingCost;
-    createMutation.mutate({ ...form, subtotal: String(subtotal), vatAmount: String(vatAmount), totalAmount: String(total) }, { onSuccess: () => setDialog(false) });
+    createMutation.mutate({ 
+      ...form, 
+      supplierId: Number(form.supplierId) || 1,
+      subtotal: String(subtotal), 
+      vatAmount: String(vatAmount), 
+      totalAmount: String(total),
+      items: []
+    }, { onSuccess: () => setDialog(false) });
   };
 
   return (

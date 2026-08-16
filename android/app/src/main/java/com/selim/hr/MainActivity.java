@@ -1,4 +1,4 @@
-package com.horizonsolutions.hr;
+package com.selim.hr;
 
 import com.getcapacitor.BridgeActivity;
 

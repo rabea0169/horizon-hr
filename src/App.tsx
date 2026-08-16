@@ -3,8 +3,9 @@ import { Routes, Route } from "react-router";
 import AppLayout from "./components/AppLayout";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import { getEnabledModules } from "./modules.config";
-import { useRoles, canAccess, type UserRole } from "@/hooks/useRoles";
+import { useEnabledModules } from "./modules.config";
+import { trpc } from "@/providers/trpc";
+import { useRoles, canAccess } from "@/hooks/useRoles";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Kiosk = lazy(() => import("./pages/Kiosk"));
@@ -32,9 +33,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 function RoleGuard({ path, children }: { path: string; children: React.ReactNode }) {
   const { getSessionUser } = useRoles();
   const user = getSessionUser();
-  const role = (user?.role || "worker") as UserRole;
 
-  if (!canAccess(role, path)) {
+  if (!canAccess(user, path)) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4" style={{ color: "var(--text-primary)" }} dir="rtl">
         <div className="text-6xl">🚫</div>
@@ -48,7 +48,31 @@ function RoleGuard({ path, children }: { path: string; children: React.ReactNode
 }
 
 function AppRoutes() {
-  const enabledModules = getEnabledModules();
+  const enabledModules = useEnabledModules();
+
+  const { data: serverDisabledModules } = trpc.settings.getModulesState.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    staleTime: 60000,
+  });
+
+  useEffect(() => {
+    if (serverDisabledModules) {
+      try {
+        const localDisabled = JSON.parse(localStorage.getItem("disabled_modules") || "[]");
+        const hasMismatch =
+          localDisabled.length !== serverDisabledModules.length ||
+          localDisabled.some((id: string) => !serverDisabledModules.includes(id));
+
+        if (hasMismatch) {
+          localStorage.setItem("disabled_modules", JSON.stringify(serverDisabledModules));
+          window.dispatchEvent(new Event("modules_changed"));
+        }
+      } catch (e) {
+        localStorage.setItem("disabled_modules", JSON.stringify(serverDisabledModules));
+        window.dispatchEvent(new Event("modules_changed"));
+      }
+    }
+  }, [serverDisabledModules]);
 
   return (
     <Routes>

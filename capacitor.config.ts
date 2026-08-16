@@ -1,12 +1,11 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.horizonsolutions.hr',
-  appName: 'Horizon HR',
+  appId: 'com.selim.hr',
+  appName: 'سليم HR',
   webDir: 'dist/public',
   server: {
     cleartext: false,
-    allowNavigation: [],
     androidScheme: 'https',
   },
   android: {

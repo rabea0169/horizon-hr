@@ -1,7 +1,7 @@
 {
-  "name": "Horizon HR - Factory ERP",
-  "short_name": "Horizon HR",
-  "description": "نظام إدارة المصنع والعمال - Horizon HR",
+  "name": "Selim HR - Factory ERP",
+  "short_name": "Selim HR",
+  "description": "نظام إدارة المصنع والعمال - سليم HR",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0E0E0E",

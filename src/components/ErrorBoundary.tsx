@@ -53,7 +53,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-white/50">
               حدث خطأ في عرض هذه الصفحة. لا تقلق — بياناتك محفوظة.
             </p>
-            {this.state.error && (
+            {this.state.error && import.meta.env.DEV && (
               <div className="text-left p-3 rounded-lg bg-red-500/5 border border-red-500/10 overflow-auto max-h-[200px]">
                 <code className="text-xs text-red-600 dark:text-red-300 font-mono whitespace-pre-wrap">
                   {this.state.error.message}
