@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 
 await esbuild.build({
-  entryPoints: [path.join(root, "api/boot.ts")],
+  entryPoints: [path.join(root, "server/boot.ts")],
   outfile: path.join(root, "dist/boot.js"),
   bundle: true,
   platform: "node",

@@ -4,23 +4,19 @@
   "installCommand": "npm install",
   "framework": null,
   "functions": {
-    "api/boot.ts": {
+    "api/index.ts": {
       "maxDuration": 30,
-      "includeFiles": [
-        "db/**",
-        "contracts/**",
-        "api/**"
-      ]
+      "includeFiles": "server/**"
     }
   },
   "rewrites": [
     {
       "source": "/api/trpc/:path*",
-      "destination": "/api/boot.ts"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/api/:path*",
-      "destination": "/api/boot.ts"
+      "destination": "/api/index.ts"
     }
   ]
 }
